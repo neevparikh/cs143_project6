@@ -1,0 +1,11 @@
+Paper -
+https://arxiv.org/abs/1808.07371
+
+Reddit thread -
+https://www.reddit.com/r/MachineLearning/comments/99qkrk/ruc_berkeley_everybody_dance_now/
+
+Pytorch partial implementation, no pose normalization - 
+https://github.com/Lotayou/everybody_dance_now_pytorch
+
+Pytorch partial implementation, no face, hand pose, no face GAN, no smoothing - 
+https://github.com/nyoki-mtl/pytorch-EverybodyDanceNow
