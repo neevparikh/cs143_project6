@@ -9,3 +9,9 @@ https://github.com/Lotayou/everybody_dance_now_pytorch
 
 Pytorch partial implementation, no face, hand pose, no face GAN, no smoothing - 
 https://github.com/nyoki-mtl/pytorch-EverybodyDanceNow
+
+OpenPose -
+https://github.com/CMU-Perceptual-Computing-Lab/openpose
+
+pix2pixHD -
+https://github.com/NVIDIA/pix2pixHD
