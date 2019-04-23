@@ -21,6 +21,8 @@ class PoseNormalizer:
 
     def _compute_translation(self, source):
         """ b = t_min + (avg_frame_pos_source - s_min) / (s_max - s_min) * (t_max - t_min) - f_source """
+
+        # NOTE: f_source assumed 0 as we don't know what it is yet
         avg_source = (source["left"] + source["right"]) / 2
         t_min = self.statistics["target"]["min"]
         t_max = self.statistics["target"]["max"]
