@@ -77,7 +77,7 @@ class PoseNormalizer:
         return np.median(ankle_array, overwrite_input=False)
     
     def _get_min_ankle_position(self, ankle_array, med, mx):
-        dist_mx_med = np.abs(mx - med)/mx
+        dist_mx_med = np.abs(mx - med)
         cluster = np.array([p for p in ankle_array if (p < med) and (np.abs(np.abs(p - med) - dist_mx_med) < self.epsilon)])
         return np.max(cluster)
 
@@ -103,4 +103,5 @@ class PoseNormalizer:
         s = self._compute_scale(source_ankles)
         target[:, 1] *= s
         target[:, 1] += b
+        target[:, 0:2] = target.astype("int")[:, 0:2]
         return target
