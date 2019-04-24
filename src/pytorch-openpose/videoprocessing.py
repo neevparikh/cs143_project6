@@ -13,30 +13,70 @@ import numpy as np
 body_estimation = Body('model/body_pose_model.pth')
 hand_estimation = Hand('model/hand_pose_model.pth')
 
-video = 'SampleDance.mp4'
-cam = cv2.VideoCapture(video)
+source = 'video/SampleDance.mp4'
+source_video = cv2.VideoCapture(source)
 
-success,image = cam.read()
-currentFrame = 0
-fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-video=cv2.VideoWriter('video.mp4', fourcc, 30,(720, 480))
+# TODO Add target video later
+target = 'video/example.mp4'
+target_video = cv2.VideoCapture(target)
+
+# Initialize arrays to store pose information
+source_poses = []
+target_poses = []
+
+# Initialize arrays for PoseNormalizer
+source_left = []
+source_right = []
+target_left = []
+target_right = []
 
 while(True): 
     # reading from frame 
-    ret,frame = cam.read() 
-  
-    if ret:
-      frame = cv2.resize(frame, (720, 480))
-      candidate, subset = body_estimation(frame)
-      
-      canvas = copy.deepcopy(frame)
-      canvas = np.ones(canvas.shape, dtype='uint8') * 255
-      canvas = util.draw_bodypose(canvas, candidate, subset)
+    ret_source, source_frame = source_video.read() 
+    ret_target, target_frame = target_video.read()
+    
+    if ret_source and ret_target :
+      # Resize frames to make computation faster
+      source_frame = cv2.resize(source_frame, (720, 480))
+      target_frame = cv2.resize(target_frame, (720, 480))
 
-      video.write(canvas)
-      currentFrame += 1
-      print(currentFrame)
+      # Grab pose estimations for both video frames
+      source_candidate, source_subset = body_estimation(source_frame)
+      target_candidate, target_subset = body_estimation(target_frame)
+
+      # Put pose estimations into memory
+      source_poses.append(source_candidate)
+      target_poses.append(target_candidate)
+
+      # Grab ankles
+      source_left.append(source_candidate[13, 1])
+      source_right.append(source_candidate[10, 1])
+      target_left.append(target_candidate[13, 1])
+      target_right.append(target_candidate[10, 1])
     else: 
         break
 
-video.release()
+source_video.release()
+target_video.release()
+
+source_dict = {
+  "left": np.array(source_left),
+  "right": np.array(source_right)
+}
+
+target_dict = {
+  "left": np.array(target_left),
+  "right": np.array(target_right)
+}
+
+pose_normalizer = PoseNormalizer(source_dict, target_dict)
+
+source_poses = np.array(source_poses)
+target_poses = np.array(target_poses)
+
+norm_target_poses = pose_normalizer.transform_pose(source_poses, target_poses)
+
+# success,image = source_video.read()
+# currentFrame = 0
+# fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+# video=cv2.VideoWriter('video.mp4', fourcc, 30,(720, 480))
