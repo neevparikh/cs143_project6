@@ -14,7 +14,7 @@ class PoseNormalizer:
         self.s_left, self.s_right = self._include_ground_only(source["left"], source["right"]) 
         self.t_left, self.t_right = self._include_ground_only(target["left"], target["right"]) 
         self.epsilon = epsilon
-
+        self.statistics = {}
         self._compute_statistics(np.append(self.s_left, self.s_right), "source")
         self._compute_statistics(np.append(self.t_left, self.t_right), "target")
 
@@ -63,7 +63,6 @@ class PoseNormalizer:
         return (t_far / s_far) + (avg_source - s_min) / (s_max - s_min) * ((t_close / s_close) - (t_far / s_far))
 
     def _compute_statistics(self, ankle_array, ankle_name):
-        self.statistics = {}
         med = self._get_median_ankle_position(ankle_array)
         mx = self._get_max_ankle_position(ankle_array)
         self.statistics[ankle_name] = {
