@@ -16,6 +16,9 @@ test_image = 'images/jason.png'
 oriImg = cv2.imread(test_image)  # B,G,R order
 candidate, subset = body_estimation(oriImg)
 
+ankle_l = candidate[10, :]
+ankle_r = candidate[13, :]
+
 canvas = copy.deepcopy(oriImg)
 canvas = util.draw_bodypose(canvas, candidate, subset)
 
