@@ -17,7 +17,7 @@ source = 'video/SampleDance.mp4'
 source_video = cv2.VideoCapture(source)
 
 # TODO Add target video later
-target = 'video/example.mp4'
+target = 'video/SampleDance.mp4'
 target_video = cv2.VideoCapture(target)
 
 # Initialize arrays to store pose information
@@ -29,6 +29,9 @@ source_left = []
 source_right = []
 target_left = []
 target_right = []
+
+# Debugging purposes
+frame = 0
 
 while(True): 
     # reading from frame 
@@ -53,6 +56,9 @@ while(True):
       source_right.append(source_candidate[10, 1])
       target_left.append(target_candidate[13, 1])
       target_right.append(target_candidate[10, 1])
+
+      frame += 1
+      print(frame)
     else: 
         break
 
@@ -71,10 +77,13 @@ target_dict = {
 
 pose_normalizer = PoseNormalizer(source_dict, target_dict)
 
-source_poses = np.array(source_poses)
-target_poses = np.array(target_poses)
+norm_target_poses = []
 
-norm_target_poses = pose_normalizer.transform_pose(source_poses, target_poses)
+for i in range(len(source_poses)):
+  pose = pose_normalizer.transform_pose(source_poses[i], target_poses[i])
+  norm_target_poses.append(pose)
+  print(pose)
+
 
 # success,image = source_video.read()
 # currentFrame = 0
