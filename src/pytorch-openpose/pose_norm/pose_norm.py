@@ -43,7 +43,7 @@ class PoseNormalizer:
         s_min = self.statistics["source"]["min"]
         s_max = self.statistics["source"]["max"]
 
-        return (t_far / s_far) + (a_source - s_min) / (s_max - s_min) * ((t_close / s_close) - (t_far / s_far))
+        return (t_far / s_far) + (avg_source - s_min) / (s_max - s_min) * ((t_close / s_close) - (t_far / s_far))
 
     def _compute_statistics(self, ankle_series, ankle_name):
         self.statistics = {}
