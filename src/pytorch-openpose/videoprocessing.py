@@ -96,8 +96,7 @@ for i in range(len(source_poses)):
   # Visually testing if normalizing works 
   canvas = np.ones((480, 720, 3), dtype='uint8') * 255
   canvas = util.draw_bodypose(canvas, pose, target_subsets[i])
-
-video.write(canvas)
+  video.write(canvas)
 
 # success,image = source_video.read()
 # currentFrame = 0
