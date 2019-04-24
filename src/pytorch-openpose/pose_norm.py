@@ -75,15 +75,16 @@ class PoseNormalizer:
 
     def transform_pose(self, source, target):
         """
-            source :: dict<int> :: A dictionary (keys: {"left", "right"}) of the y coord of the left and right ankle in the source video 
-            target :: dict<int> :: A dictionary (keys: {"left", "right"}) of the y coord of the left and right ankle in the target video 
+            source :: ndarray :: numpy array of all the pose estimates as returned by pose estimation of source video 
+            target :: ndarray :: numpy array of all the pose estimates as returned by pose estimation of target video
             
             Returns :: normalized target in the same format 
         """
-        b = self._compute_translation(source)
-        s = self._compute_scale(source)
-        norm_target = {
-                "left": s * target["left"] + b,
-                "right": s * target["right"] + b
-                }
-        return norm_target 
+
+        source_ankles = {"left": source[13, 1], "right": source[10, 1]}
+
+        b = self._compute_translation(source_ankles)
+        s = self._compute_scale(source_ankles)
+        target[:, 1] *= s
+        target[:, 1] += b
+        return target
