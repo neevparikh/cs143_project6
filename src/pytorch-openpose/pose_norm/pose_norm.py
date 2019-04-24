@@ -74,6 +74,12 @@ class PoseNormalizer:
         return np.amax(ankle_series)
 
     def transform_pose(self, source, target):
+        """
+            source :: dict<int> :: A dictionary (keys: {"left", "right"}) of the y coord of the left and right ankle in the source video 
+            target :: dict<int> :: A dictionary (keys: {"left", "right"}) of the y coord of the left and right ankle in the target video 
+            
+            Returns :: normalized target in the same format 
+        """
         b = self._compute_translation(source)
         s = self._compute_scale(source)
         norm_target = {
