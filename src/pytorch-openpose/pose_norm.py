@@ -61,8 +61,11 @@ class PoseNormalizer:
         return np.median(ankle_series, overwrite_input=False)
     
     def _get_min_ankle_position(self, ankle_series, med, mx):
-        dist_mx_med = np.abs(mx - med)/mx
+        dist_mx_med = np.abs(mx - med)
+        print(ankle_series, med, mx)
+        print(dist_mx_med)
         cluster = np.array([p for p in ankle_series if (p < med) and (np.abs(np.abs(p - med) - dist_mx_med) < self.epsilon)])
+        print(cluster)
         return np.max(cluster)
 
     def _get_close_far_position(self, ankle_series, mx, mn):

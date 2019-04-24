@@ -38,7 +38,7 @@ while(True):
     ret_source, source_frame = source_video.read() 
     ret_target, target_frame = target_video.read()
     
-    if ret_source and ret_target :
+    if ret_source and ret_target and frame < 5:
       # Resize frames to make computation faster
       source_frame = cv2.resize(source_frame, (720, 480))
       target_frame = cv2.resize(target_frame, (720, 480))
@@ -75,7 +75,7 @@ target_dict = {
   "right": np.array(target_right)
 }
 
-pose_normalizer = PoseNormalizer(source_dict, target_dict, epsilon=0.9)
+pose_normalizer = PoseNormalizer(source_dict, target_dict, epsilon=0.7)
 
 norm_target_poses = []
 
