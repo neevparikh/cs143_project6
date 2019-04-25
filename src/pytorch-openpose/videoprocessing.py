@@ -80,7 +80,7 @@ target_dict = {
   "right": np.array(target_right)
 }
 
-pose_normalizer = PoseNormalizer(source_dict, target_dict, epsilon=0.9)
+pose_normalizer = PoseNormalizer(source_dict, target_dict, epsilon=2)
 
 norm_target_poses = []
 

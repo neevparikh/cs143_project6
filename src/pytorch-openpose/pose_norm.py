@@ -38,7 +38,7 @@ class PoseNormalizer:
     def _compute_translation(self, source, target):
         """ b = t_min + (avg_frame_pos_source - s_min) / (s_max - s_min) * (t_max - t_min) - f_source """
 
-        # NOTE: f_source assumed 0 as we don't know what it is yet
+        # NOTE: f_source assumed to be avg_target as we don't know what it is yet
         avg_source = (source["left"] + source["right"]) / 2
         avg_target = (target["left"] + target["right"]) / 2
         t_min = self.statistics["target"]["min"]
@@ -78,8 +78,7 @@ class PoseNormalizer:
         return np.median(ankle_array, overwrite_input=False)
     
     def _get_min_ankle_position(self, ankle_array, med, mx):
-        dist_mx_med = np.abs(mx - med)
-        cluster = np.array([p for p in ankle_array if (p < med) and (np.abs(np.abs(p - med) - dist_mx_med) < self.epsilon)])
+        cluster = np.array([p for p in ankle_array if (p < med) and (np.abs(np.abs(p - med) - np.abs(mx - med)) < self.epsilon)])
         return np.max(cluster)
 
     def _get_close_far_position(self, ankle_array, mx, mn):
@@ -88,7 +87,7 @@ class PoseNormalizer:
         return np.max(cluster_close), np.max(cluster_far)
 
     def _get_max_ankle_position(self, ankle_array):
-        return np.amax(ankle_array)
+        return np.max(ankle_array)
 
     def transform_pose(self, source, target):
         """
@@ -103,10 +102,6 @@ class PoseNormalizer:
 
         b = self._compute_translation(source_ankles, target_ankles)
         s = self._compute_scale(source_ankles)
-        # target[:, 1] *= s
-        # target[:, 1] += b
-        # target[:, 0:2] = target.astype("int")[:, 0:2]
-        # return target
         source[:, 1] *= s
         source[:, 1] += b
         source[:, 0:2] = source.astype("int")[:, 0:2]
