@@ -16,8 +16,7 @@ hand_estimation = Hand('model/hand_pose_model.pth')
 source = 'video/SampleDance.mp4'
 source_video = cv2.VideoCapture(source)
 
-# TODO Add target video later
-target = 'video/SampleDance.mp4'
+target = 'video/OldManDancing.mp4'
 target_video = cv2.VideoCapture(target)
 
 # Initialize arrays to store pose information
@@ -81,13 +80,13 @@ target_dict = {
   "right": np.array(target_right)
 }
 
-pose_normalizer = PoseNormalizer(source_dict, target_dict, epsilon=0.7)
+pose_normalizer = PoseNormalizer(source_dict, target_dict, epsilon=0.9)
 
 norm_target_poses = []
 
 # Testing video output
 fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-video=cv2.VideoWriter('testingvideo.mp4', fourcc, 30,(720, 480))
+video=cv2.VideoWriter('testingvideo2.mp4', fourcc, 30,(720, 480))
 
 for i in range(len(source_poses)):
   pose = pose_normalizer.transform_pose(source_poses[i], target_poses[i])

@@ -3,7 +3,7 @@ import numpy as np
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
 
-    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=10):
+    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=20):
         """
             source :: dict<ndarray> :: dict of source left ankle array and source right ankle array
             target :: dict<ndarray> :: dict of target left ankle array and target right ankle array
@@ -35,17 +35,18 @@ class PoseNormalizer:
 
         return np.array(left_grounded), np.array(right_grounded)
 
-    def _compute_translation(self, source):
+    def _compute_translation(self, source, target):
         """ b = t_min + (avg_frame_pos_source - s_min) / (s_max - s_min) * (t_max - t_min) - f_source """
 
         # NOTE: f_source assumed 0 as we don't know what it is yet
         avg_source = (source["left"] + source["right"]) / 2
+        avg_target = (target["left"] + target["right"]) / 2
         t_min = self.statistics["target"]["min"]
         t_max = self.statistics["target"]["max"]
         s_min = self.statistics["source"]["min"]
         s_max = self.statistics["source"]["max"]
 
-        return t_min + (avg_source - s_min) / (s_max - s_min) * (t_max - t_min) 
+        return t_min + (avg_source - s_min) / (s_max - s_min) * (t_max - t_min) - avg_target
 
     def _compute_scale(self, source):
         """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) * (t_close / s_close - t_far / s_far) """
@@ -98,10 +99,15 @@ class PoseNormalizer:
         """
 
         source_ankles = {"left": source[13, 1], "right": source[10, 1]}
+        target_ankles = {"left": target[13, 1], "right": target[10, 1]}
 
-        b = self._compute_translation(source_ankles)
+        b = self._compute_translation(source_ankles, target_ankles)
         s = self._compute_scale(source_ankles)
-        target[:, 1] *= s
-        target[:, 1] += b
-        target[:, 0:2] = target.astype("int")[:, 0:2]
-        return target
+        # target[:, 1] *= s
+        # target[:, 1] += b
+        # target[:, 0:2] = target.astype("int")[:, 0:2]
+        # return target
+        source[:, 1] *= s
+        source[:, 1] += b
+        source[:, 0:2] = source.astype("int")[:, 0:2]
+        return source
