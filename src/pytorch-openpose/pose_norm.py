@@ -106,3 +106,19 @@ class PoseNormalizer:
         source[:, 1] += b
         source[:, 0:2] = source.astype("int")[:, 0:2]
         return source
+
+    def transform_pose_global(self, source_all, target_all):
+        """
+            source :: ndarray :: numpy array of all the pose estimates for all the frames of the source 
+            target :: ndarray :: numpy array of all the pose estimates for all the frames of the target
+
+            Returns :: globally normalized in the same format
+        """
+        source_ankles = {"left": self.statistics["source"]["total_avg"], "right": self.statistics["source"]["total_avg"]}
+        target_ankles = {"left": self.statistics["target"]["total_avg"], "right": self.statistics["target"]["total_avg"]}
+        b = self._compute_translation(source_ankles, target_ankles)
+        s = self._compute_scale(source_ankles)
+        source_all[:, :, 1] *= s
+        source_all[:, :, 1] += b
+        source_all[:, :, 0:2] = source_all.astype("int")[:, :, 0:2]
+        return source_all
