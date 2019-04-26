@@ -46,7 +46,7 @@ class PoseNormalizer:
         s_min = self.statistics["source"]["min"]
         s_max = self.statistics["source"]["max"]
 
-        return t_min + (avg_source - s_min) / (s_max - s_min) * (t_max - t_min) - avg_target
+        return t_min + ((avg_source - s_min) / (s_max - s_min)) * (t_max - t_min) - 340 # self.statistics["target"]["total_avg"]
 
     def _compute_scale(self, source):
         """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) * (t_close / s_close - t_far / s_far) """
@@ -56,8 +56,6 @@ class PoseNormalizer:
         t_close = self.statistics["target"]["close"]
         s_far = self.statistics["source"]["far"]
         s_close = self.statistics["source"]["close"]
-        t_min = self.statistics["target"]["min"]
-        t_max = self.statistics["target"]["max"]
         s_min = self.statistics["source"]["min"]
         s_max = self.statistics["source"]["max"]
 
@@ -66,9 +64,11 @@ class PoseNormalizer:
     def _compute_statistics(self, ankle_array, ankle_name):
         med = self._get_median_ankle_position(ankle_array)
         mx = self._get_max_ankle_position(ankle_array)
+        avg = np.average(ankle_array)
         self.statistics[ankle_name] = {
             "med": med,
-            "max": mx
+            "max": mx,
+            "total_avg": avg
         }
         mn = self._get_min_ankle_position(ankle_array, med, mx)
         self.statistics[ankle_name]["min"] = mn
@@ -102,6 +102,9 @@ class PoseNormalizer:
 
         b = self._compute_translation(source_ankles, target_ankles)
         s = self._compute_scale(source_ankles)
+        print(b, s)
+        b = 20
+        s = 1.1
         source[:, 1] *= s
         source[:, 1] += b
         source[:, 0:2] = source.astype("int")[:, 0:2]
