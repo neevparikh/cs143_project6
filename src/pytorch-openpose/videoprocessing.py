@@ -103,32 +103,16 @@ target_dict = {
 
 pose_normalizer = PoseNormalizer(source_dict, target_dict, epsilon=3)
 
-norm_target_poses = []
-
 # Testing video output
 fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-video=cv2.VideoWriter('testingvideo2.mp4', fourcc, 30,(720, 480))
-
-for i in range(len(source_poses)):
-    pose = pose_normalizer.transform_pose(source_poses[i], target_poses[i])
-    if i > 0:
-        try:
-            smoothed_pose = pose
-            smoothed_pose[:, 1] = alpha * pose[:, 1] + (1 - alpha) * prev_pose[:, 1]
-        except:
-            smoothed_pose = pose
-    else:
-        smoothed_pose = pose
-
-    norm_target_poses.append(smoothed_pose)
-    prev_pose = pose
-    
+video=cv2.VideoWriter('video/pose_normed.mp4', fourcc, 30,(720, 480))
+frames = len(source_poses)
+transformed_all = pose_normalizer.transform_pose_global(source_poses, target_poses)
+for i in range(frames):
+    pose = transformed_all[i]
     # Visually testing if normalizing works 
     canvas = np.ones((480, 720, 3), dtype='uint8') * 255
     canvas = util.draw_bodypose(canvas, pose, source_subsets[i])
     video.write(canvas)
+     
 print(pose_normalizer.statistics)
-# success,image = source_video.read()
-# currentFrame = 0
-# fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-# video=cv2.VideoWriter('video.mp4', fourcc, 30,(720, 480))

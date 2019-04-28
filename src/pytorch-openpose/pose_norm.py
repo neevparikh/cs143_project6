@@ -46,7 +46,7 @@ class PoseNormalizer:
         s_min = self.statistics["source"]["min"]
         s_max = self.statistics["source"]["max"]
 
-        return t_min + ((avg_source - s_min) / (s_max - s_min)) * (t_max - t_min) - 340 # self.statistics["target"]["total_avg"]
+        return t_min + ((avg_source - s_min) / (s_max - s_min)) * (t_max - t_min) - avg_target # self.statistics["target"]["total_avg"]
 
     def _compute_scale(self, source):
         """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) * (t_close / s_close - t_far / s_far) """
@@ -102,9 +102,6 @@ class PoseNormalizer:
 
         b = self._compute_translation(source_ankles, target_ankles)
         s = self._compute_scale(source_ankles)
-        print(b, s)
-        b = 20
-        s = 1.1
         source[:, 1] *= s
         source[:, 1] += b
         source[:, 0:2] = source.astype("int")[:, 0:2]
@@ -112,8 +109,8 @@ class PoseNormalizer:
 
     def transform_pose_global(self, source_all, target_all):
         """
-            source :: ndarray :: numpy array of all the pose estimates for all the frames of the source 
-            target :: ndarray :: numpy array of all the pose estimates for all the frames of the target
+            source :: list<ndarray> :: numpy array of all the pose estimates for all the frames of the source 
+            target :: list<ndarray> :: numpy array of all the pose estimates for all the frames of the target
 
             Returns :: globally normalized in the same format
         """
@@ -121,7 +118,10 @@ class PoseNormalizer:
         target_ankles = {"left": self.statistics["target"]["total_avg"], "right": self.statistics["target"]["total_avg"]}
         b = self._compute_translation(source_ankles, target_ankles)
         s = self._compute_scale(source_ankles)
-        source_all[:, :, 1] *= s
-        source_all[:, :, 1] += b
-        source_all[:, :, 0:2] = source_all.astype("int")[:, :, 0:2]
+        for i in range(len(source_all)):
+            p = source_all[i]
+            p[:, 1] *= s
+            p[:, 1] += b
+            p[:, 0:2] = p.astype("int")[:, 0:2]
+            source_all[i] = p
         return source_all
