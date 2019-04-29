@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Personal Videos
+jason.mp4
+nimish.mp4
+neev.mp4
+
 # Distribution / packaging
 .Python
 build/
