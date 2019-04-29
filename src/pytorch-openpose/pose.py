@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, 'python')
+sys.path.insert(0, 'pytorch-openpose/python')
 import cv2
 import model
 import util
