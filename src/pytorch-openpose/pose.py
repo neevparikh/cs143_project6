@@ -31,37 +31,30 @@ def get_pose_estimate(video_location):
     poses = []
 
     # Frame counter
-    frame = 0
+    frame_counter = 0
 
     while(True): 
         # reading from frame 
-        ret_source, source_frame = source_video.read() 
+        ret, frame = video.read() 
             
-        if ret_source and ret_target:
-            source_frame = np.rot90(np.rot90(np.rot90(source_frame)))
-            h, w, _ = source_frame.shape
-            source_frame = cv2.resize(source_frame, (int(w/2), int(h/2)))
-
-            target_frame = np.rot90(np.rot90(np.rot90(target_frame)))
-            target_frame = cv2.resize(target_frame, (int(w/2), int(h/2)))
+        if ret:
+            h, w, _ = frame.shape
+            frame = cv2.resize(frame, (int(w/2), int(h/2)))
 
             # Grab pose estimations for both video frames
-            source_candidate, _ = body_estimation(source_frame)
-            target_candidate, _ = body_estimation(target_frame)
+            candidate, _ = body_estimation(frame)
 
             # Put pose estimations into memory
-            source_poses.append(source_candidate)
-            target_poses.append(target_candidate)
+            poses.append(candidate)
 
-            frame += 1
-            print("Frame: ", frame)
+            frame_counter += 1
+            print("Frame: ", frame_counter)
         else:
             break
 
-    source_video.release()  
-    target_video.release()
+    video.release()  
 
-    return source_poses, target_poses
+    return poses 
 
 def get_pose_normed_estimatation(source, target):
     """
@@ -88,7 +81,7 @@ def get_pose_normed_estimatation(source, target):
     target_right = []
 
     # Frame counter
-    frame = 0
+    frame_counter = 0
 
     while(True): 
         # reading from frame 
@@ -96,11 +89,11 @@ def get_pose_normed_estimatation(source, target):
         ret_target, target_frame = target_video.read()
             
         if ret_source and ret_target:
-            source_frame = np.rot90(np.rot90(np.rot90(source_frame)))
+            # source_frame = np.rot90(np.rot90(np.rot90(source_frame)))
             h, w, _ = source_frame.shape
             source_frame = cv2.resize(source_frame, (int(w/2), int(h/2)))
 
-            target_frame = np.rot90(np.rot90(np.rot90(target_frame)))
+            # target_frame = np.rot90(np.rot90(np.rot90(target_frame)))
             target_frame = cv2.resize(target_frame, (int(w/2), int(h/2)))
 
             # Grab pose estimations for both video frames
@@ -117,8 +110,8 @@ def get_pose_normed_estimatation(source, target):
             target_left.append(target_candidate[13, 1])
             target_right.append(target_candidate[10, 1])
 
-            frame += 1
-            print("Frame: ", frame)
+            frame_counter += 1
+            print("Frame: ", frame_counter)
         else:
             break
 
