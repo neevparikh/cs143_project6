@@ -1,8 +1,10 @@
 import sys
 import cv2
 sys.path.insert(0, "pytorch-openpose")
+sys.path.insert(0, "gan")
 import argparse
 import pickle
+from gan_wrapper import GANWrapper
 from pose import get_pose_normed_estimatation, get_pose_estimatation 
 
 # Creates command line parser
@@ -19,7 +21,8 @@ def main():
 
     if mode == "train":
         target_poses = get_pose_estimatation(target)
-        # gan_model
+        gan_model = GANWrapper(source, target, mode)
+        gan_model.train()
     else:
         norm_source_poses = get_pose_normed_estimatation(source, target)[0]
         try:
