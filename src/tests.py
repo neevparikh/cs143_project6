@@ -27,7 +27,7 @@ def main():
     regen = args.regen
 
     if mode == "train":
-        target_poses, target_subsets = get_pose_estimate(target, regen=regen)
+        target_poses, target_subsets = get_pose_estimate(target, regen=regen, rotate=False)
         gan = GANWrapper(source, target, mode)
         images = gan.create_image_from_pose(target_poses, target_subsets)
         plt.imshow(images[12], cmap="gray")
