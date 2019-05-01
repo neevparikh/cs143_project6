@@ -5,7 +5,7 @@ sys.path.insert(0, "gan")
 import argparse
 import pickle
 from gan_wrapper import GANWrapper
-from pose import get_pose_normed_estimatation, get_pose_estimatation 
+from pose import get_pose_normed_estimate, get_pose_estimate
 
 # Creates command line parser
 def main():
@@ -13,18 +13,24 @@ def main():
     parser.add_argument("source", help="path to source video")
     parser.add_argument("target", help="path to target video")
     parser.add_argument("--mode", choices=["train", "transfer"], required=True, help="training mode or transfer mode")
-    args = parser.parse_args() 
+    parser.add_argument("--regen", action="store_true", dest="regen",
+                        help="regenerate the pickles")
+    parser.add_argument("--no-regen", action="store_false", dest="regen",
+                        help="do not regenerate the pickles")
 
+
+    args = parser.parse_args() 
     source = args.source
     target = args.target
     mode = args.mode
-
+    regen = args.regen
     if mode == "train":
-        target_poses = get_pose_estimatation(target)
+
+        target_poses = get_pose_estimate(target, regen=regen)
         gan_model = GANWrapper(source, target, mode)
         gan_model.train()
     else:
-        norm_source_poses = get_pose_normed_estimatation(source, target)[0]
+        norm_source_poses = get_pose_normed_estimate(source, target, regen=regen)[0]
         try:
             gan_model = pickle.load(open("gan/trained_gan.pkl", "rb"))
         except FileNotFoundError:

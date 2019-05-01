@@ -14,18 +14,21 @@ def main():
     parser.add_argument("target", help="path to target video")
     parser.add_argument("--mode", choices=["train", "transfer"], required=True,
                         help="training mode or transfer mode")
+    parser.add_argument("--regen", action="store_true", dest="regen",
+                        help="regenerate the pickles")
+    parser.add_argument("--no-regen", action="store_false", dest="regen",
+                        help="do not regenerate the pickles")
     args = parser.parse_args()
 
     source = args.source
     target = args.target
     mode = args.mode
+    regen = args.regen
 
     if mode == "train":
-        target_poses = get_pose_estimate(target)
-        print(target_poses)
+        target_poses = get_pose_estimate(target, regen=regen)
     else:
-        norm_source_poses = get_pose_normed_estimate(source, target)[0]
-        print(norm_source_poses)
+        norm_source_poses = get_pose_normed_estimate(source, target, regen=regen)[0]
 
 if __name__ == "__main__":
     main()
