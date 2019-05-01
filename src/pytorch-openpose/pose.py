@@ -12,7 +12,6 @@ import copy
 import numpy as np
 
 # TODO:
-# 1) Remove the rotation and move it to a separate preprocessing file
 
 def get_pose_estimate(video_location):
     """
@@ -35,9 +34,10 @@ def get_pose_estimate(video_location):
 
     while(True): 
         # reading from frame 
-        ret, frame = video.read() 
-            
+        ret, frame = video.read()
+
         if ret:
+            frame = np.rot90(np.rot90(np.rot90(frame)))
             h, w, _ = frame.shape
             frame = cv2.resize(frame, (int(w/2), int(h/2)))
 
@@ -52,11 +52,11 @@ def get_pose_estimate(video_location):
         else:
             break
 
-    video.release()  
+    video.release()
 
     return poses 
 
-def get_pose_normed_estimatation(source, target):
+def get_pose_normed_estimate(source, target):
     """
     source :: location of source video
     target :: location of target video
@@ -87,13 +87,13 @@ def get_pose_normed_estimatation(source, target):
         # reading from frame 
         ret_source, source_frame = source_video.read() 
         ret_target, target_frame = target_video.read()
-            
+
         if ret_source and ret_target:
-            # source_frame = np.rot90(np.rot90(np.rot90(source_frame)))
+            source_frame = np.rot90(np.rot90(np.rot90(source_frame)))
             h, w, _ = source_frame.shape
             source_frame = cv2.resize(source_frame, (int(w/2), int(h/2)))
 
-            # target_frame = np.rot90(np.rot90(np.rot90(target_frame)))
+            target_frame = np.rot90(np.rot90(np.rot90(target_frame)))
             target_frame = cv2.resize(target_frame, (int(w/2), int(h/2)))
 
             # Grab pose estimations for both video frames
