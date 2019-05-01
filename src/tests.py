@@ -6,6 +6,7 @@ import argparse
 import pickle
 from gan_wrapper import GANWrapper
 from pose import get_pose_normed_estimate, get_pose_estimate 
+from matplotlib import pyplot as plt
 
 # Creates command line parser
 def main():
@@ -26,7 +27,11 @@ def main():
     regen = args.regen
 
     if mode == "train":
-        target_poses = get_pose_estimate(target, regen=regen)
+        target_poses, target_subsets = get_pose_estimate(target, regen=regen)
+        gan = GANWrapper(source, target, mode)
+        images = gan.create_image_from_pose(target_poses, target_subsets)
+        plt.imshow(images[12], cmap="gray")
+        plt.show()
     else:
         norm_source_poses = get_pose_normed_estimate(source, target, regen=regen)[0]
 

@@ -18,25 +18,24 @@ def main():
     parser.add_argument("--no-regen", action="store_false", dest="regen",
                         help="do not regenerate the pickles")
 
-
     args = parser.parse_args() 
     source = args.source
     target = args.target
     mode = args.mode
     regen = args.regen
-    if mode == "train":
 
-        target_poses = get_pose_estimate(target, regen=regen)
+    if mode == "train":
+        target_poses, target_subsets = get_pose_estimate(target, regen=regen)
         gan_model = GANWrapper(source, target, mode)
-        gan_model.train()
+        gan_model.train(target_subsets)
     else:
-        norm_source_poses = get_pose_normed_estimate(source, target, regen=regen)[0]
+        norm_source_poses, source_poses, source_subsets, target_poses, target_subsets = get_pose_normed_estimate(source, target, regen=regen)
         try:
             gan_model = pickle.load(open("gan/trained_gan.pkl", "rb"))
         except FileNotFoundError:
             print("GAN model not found. Please retrain the GAN.") 
             sys.exit()
-        transfered_video = gan_model.apply_mapping(norm_source_poses)
+        transfered_video = gan_model.apply_mapping(norm_source_poses, source_subsets)
         fourcc = cv2.VideoWriter_fourcc(*'DIVX')
         video = cv2.VideoWriter('video/pose_normed.mp4', fourcc, 30,(720, 480))
         for frame in transfered_video:
