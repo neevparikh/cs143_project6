@@ -372,15 +372,9 @@ def get_pose_normed_estimate(source, target, regen=True, rotate=True):
 
                 # Grab pose estimations for both video frames
                 source_candidate, source_subset = body_estimation(source_frame)
-
-                if np.min(source_subset[:,19]) < 18:
-                    print('Frame Dropped', frame_counter)
-                    frame_counter += 1
-                    continue
-                
                 target_candidate, target_subset = body_estimation(target_frame)
 
-                if np.min(target_subset[:,19]) < 18:
+                if np.min(source_subset[:,19]) < 18 or np.min(target_subset[:,19]) < 18:
                     print('Frame Dropped', frame_counter)
                     frame_counter += 1
                     continue
