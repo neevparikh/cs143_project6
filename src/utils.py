@@ -9,11 +9,11 @@ import sys
 import os
 import pickle
 
-sys.path.append('src')
-sys.path.append('src/pix2pixHD')
-sys.path.append('src/pytorch-openpose')
+sys.path.append(os.getcwd() + '/src/')
+sys.path.append(os.getcwd() + '/src/pix2pixHD/')
+sys.path.append(os.getcwd() + '/src/pytorch-openpose/')
 
-from python.body import Body
+from python import body
 
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
@@ -276,7 +276,7 @@ def get_pose_estimate(video_location, regen=True, rotate=True):
     else: 
         raise FileNotFoundError 
 
-    body_estimation = Body('pytorch-openpose/model/body_pose_model.pth')
+    body_estimation = body.Body('pytorch-openpose/model/body_pose_model.pth')
 
     # Initialize arrays to store pose information
     poses = []
@@ -335,7 +335,7 @@ def get_pose_normed_estimate(source, target, regen=True, rotate=True):
     else: 
         raise FileNotFoundError 
 
-    body_estimation = Body('pytorch-openpose/model/body_pose_model.pth')
+    body_estimation = body.Body('pytorch-openpose/model/body_pose_model.pth')
 
     # Initialize arrays to store pose information
     source_poses = []
