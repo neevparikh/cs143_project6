@@ -1,9 +1,9 @@
 [submodule "src/optim"]
 	path = src/optim
-	url = git@github.com:rgreenblatt/optim.git
+	url = https://github.com/rgreenblatt/optim.git
 [submodule "src/pix2pixHD"]
 	path = src/pix2pixHD
-	url = https://github.com/NVIDIA/pix2pixHD
+	url = https://github.com/rgreenblatt/pix2pixHD
 [submodule "src/pytorch-openpose"]
 	path = src/pytorch-openpose
 	url = https://github.com/rgreenblatt/pytorch-openpose
