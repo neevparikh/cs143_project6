@@ -5,5 +5,5 @@ import torch.nn as nn
 import utils
 
 #TODO
-def generate(writer, device, config, logger):
+def generate(writer, config, logger):
     pass
