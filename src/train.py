@@ -4,6 +4,7 @@ import torch.nn as nn
 
 import utils
 from options.train_options import TrainOptions
+from torch.autograd import Variable 
 import util.util as util
 from data.data_loader import CreateDataLoader
 from util.visualizer import Visualizer
@@ -29,10 +30,10 @@ def train(config, writer, logger):
 
             save_gen = (step + 1) % config.display_freq == 0
 
-            losses, generated = model(torch.Variable(data['label']),
-                                      torch.Variable(data['inst']),
-                                      torch.Variable(data['image']),
-                                      torch.Variable(data['feat']),
+            losses, generated = model(Variable(data['label']),
+                                      Variable(data['inst']),
+                                      Variable(data['image']),
+                                      Variable(data['feat']),
                                       infer=save_gen)
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
