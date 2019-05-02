@@ -42,8 +42,8 @@ def main():
             canvas = np.ones((int(h/2), int(w/2), 3), dtype='uint8') 
             image = draw_bodypose(canvas, candidate, subset)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
-            cv2.imwrite('data/TargetPoses/pose_' + str(frame_counter) + '.png', image)
-            cv2.imwrite('data/TargetFrames/frame_' + str(frame_counter) + '.png', frame)
+            cv2.imwrite('data/train_label/pose_' + str(frame_counter) + '.png', image)
+            cv2.imwrite('data/train_img/frame_' + str(frame_counter) + '.png', frame)
             frame_counter += 1
             print(frame_counter, ' Written')
         else:
