@@ -42,8 +42,8 @@ def main():
             canvas = np.ones((int(h/2), int(w/2), 3), dtype='uint8') * 255
             image = draw_bodypose(canvas, candidate, subset)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
-            cv2.imwrite('data/TargetPoses/pose' + str(frame_counter), image)
-            cv2.imwrite('data/TargetFrames/frame' + str(frame_counter))
+            cv2.imwrite('data/TargetPoses/pose.png' + str(frame_counter), image)
+            cv2.imwrite('data/TargetFrames/frame.png' + str(frame_counter))
             frame_counter += 1
             print(frame_counter)
         else:
