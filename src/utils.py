@@ -15,6 +15,9 @@ sys.path.append('src/pytorch-openpose')
 
 from python.body import Body
 
+def get_body():
+    return Body('pytorch-openpose/model/body_pose_model.pth')
+
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
 
@@ -237,6 +240,11 @@ class AverageMeter():
         self.avg = self.sum / self.count
 
 def draw_bodypose(canvas, pose, subset):
+    """
+    canvas :: canvas to be drawn on
+    pose :: pose of person
+    subset :: subset data of the person
+    """
     stickwidth = 4
     limbSeq = [[2, 3], [2, 6], [3, 4], [4, 5], [6, 7], [7, 8], [2, 9], [9, 10], \
                [10, 11], [2, 12], [12, 13], [13, 14], [2, 1], [1, 15], [15, 17], \
