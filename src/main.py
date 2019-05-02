@@ -10,6 +10,8 @@ from pose import get_pose_normed_estimate, get_pose_estimate
 # Creates command line parser
 def main():
     parser = argparse.ArgumentParser()
+
+    #TODO
     parser.add_argument("source", help="path to source video")
     parser.add_argument("target", help="path to target video")
     parser.add_argument("--mode", choices=["train", "transfer"], required=True, help="training mode or transfer mode")
@@ -18,7 +20,7 @@ def main():
     parser.add_argument("--no-regen", action="store_false", dest="regen",
                         help="do not regenerate the pickles")
 
-    args = parser.parse_args() 
+    args = parser.parse_args()
     source = args.source
     target = args.target
     mode = args.mode
@@ -30,10 +32,11 @@ def main():
         gan_model.train(target_subsets)
     else:
         norm_source_poses, source_poses, source_subsets, target_poses, target_subsets = get_pose_normed_estimate(source, target, regen=regen)
+        #TODO
         try:
-            gan_model = pickle.load(open("gan/trained_gan.pkl", "rb"))
+            gan_model = pickle.load(open("outputs/gan/trained_gan.pth", "rb"))
         except FileNotFoundError:
-            print("GAN model not found. Please retrain the GAN.") 
+            print("GAN model not found. Please retrain the GAN.")
             sys.exit()
         transfered_video = gan_model.apply_mapping(norm_source_poses, source_subsets)
         fourcc = cv2.VideoWriter_fourcc(*'DIVX')
