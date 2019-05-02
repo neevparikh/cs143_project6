@@ -18,28 +18,25 @@ def start_run(config_ctr):
 
     device = torch.device("cuda")
 
-    # tensorboard
-    writer = SummaryWriter(log_dir=os.path.join(config.path, "tb"))
-    writer.add_text('config', config.as_markdown(), 0)
+    # tensorboard (TODO)
+    # writer = SummaryWriter(log_dir=os.path.join(config.path, "tb"))
+    # writer.add_text('config', config.as_markdown(), 0)
 
     logger = get_logger(os.path.join(
         config.path, "{}.log".format(config.name)))
-    config.print_params(logger.info)
+    # config.print_params(logger.info)
 
     logger.info("Logger is set - training start")
 
-    # set gpu device id
-    logger.info("Set GPU device {}".format(config.gpu))
-    torch.cuda.set_device(config.gpu)
-
-    # set seed
-    np.random.seed(config.seed)
-    torch.manual_seed(config.seed)
-    torch.cuda.manual_seed_all(config.seed)
+    # set seed (TODO)
+    # np.random.seed(config.seed)
+    # torch.manual_seed(config.seed)
+    # torch.cuda.manual_seed_all(config.seed)
 
     torch.backends.cudnn.benchmark = True
 
-    return config_obj, writer, logger
+    # return config_obj, writer, logger
+    return config_obj, None, logger
 
 class CustomSchedule:
     def __init__(self, num_iters, param_values, intervals):
