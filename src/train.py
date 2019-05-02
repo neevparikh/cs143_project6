@@ -5,7 +5,6 @@ import torch.nn as nn
 import utils
 from options.train_options import TrainOptions
 import util.util as util
-from config import TrainConfig
 from data.data_loader import CreateDataLoader
 from util.visualizer import Visualizer
 from models.models import create_model
@@ -15,9 +14,10 @@ from models.models import create_model
 # - TensorBoard?
 
 def train(config, writer, logger):
+    config = config.opt
+
     data_set = CreateDataLoader(config).load_data()
 
-    config = config.opt
 
     total_steps = config.epochs * len(data_set)
 
@@ -74,4 +74,4 @@ def train(config, writer, logger):
             model.module.update_learning_rate()
 
 if __name__ == '__main__':
-    train(*utils.start_run(TrainConfig))
+    train(*utils.start_run(TrainOptions))
