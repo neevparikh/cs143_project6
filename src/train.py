@@ -15,9 +15,7 @@ from models.models import create_model
 
 def train(config, writer, logger):
     config = config.opt
-
     data_set = CreateDataLoader(config).load_data()
-
 
     total_steps = config.epochs * len(data_set)
 
@@ -27,7 +25,7 @@ def train(config, writer, logger):
     step = 0
 
     for epoch in range(config.epochs):
-        for data in enumerate(data_set):
+        for data in data_set:
 
             save_gen = (step + 1) % config.display_freq == 0
 
@@ -35,7 +33,7 @@ def train(config, writer, logger):
                                       torch.Variable(data['inst']),
                                       torch.Variable(data['image']),
                                       torch.Variable(data['feat']),
-                                      infer=save_fake)
+                                      infer=save_gen)
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
                 x, int) else x for x in losses]
@@ -65,11 +63,13 @@ def train(config, writer, logger):
                 model.module.save('latest')
                 model.module.save(epoch)
 
+            step += 1
+
         ### train the entire network after certain iterations
         if (config.niter_fix_global != 0) and (epoch == config.niter_fix_global):
             model.module.update_fixed_params()
 
-        ### linearly decay learning rate after certain iterations\n",
+        ### linearly decay learning rate after certain iterations
         if epoch > config.niter:
             model.module.update_learning_rate()
 
