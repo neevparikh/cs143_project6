@@ -1,7 +1,5 @@
 import sys
 import cv2
-sys.path.insert(0, "pytorch-openpose")
-sys.path.insert(0, "gan")
 import argparse
 import pickle
 from gan_wrapper import GANWrapper

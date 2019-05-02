@@ -1,7 +1,8 @@
-# from options.train_options import TrainOptions
+### This might be useful eventually for better parameter display
+
 # import os
 
-# class BaseConfig(TrainOptions):
+# class BaseConfig(ArgumentParser):
 #     def print_params(self, prtf=print):
 #         prtf("")
 #         prtf("Parameters:")

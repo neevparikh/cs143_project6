@@ -12,7 +12,8 @@ from models.models import create_model
 
 #TODO:
 # - Logging?
-# - TB?
+# - TensorBoard?
+
 def train(config, writer, logger):
     data_set = CreateDataLoader(config).load_data()
 
