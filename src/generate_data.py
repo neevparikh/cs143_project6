@@ -34,18 +34,18 @@ def main():
             frame = cv2.resize(frame, (int(w/2), int(h/2)))
 
             candidate, subset = body_estimation(frame)
-            if np.min(subset[:,19]) < 18:
-                print('Frame Dropped', frame_counter)
+            if np.min(subset[:,19]) < 17:
+                print('Frame Dropped', frame_counter, np.min(subset[:,19]))
                 frame_counter += 1
                 continue
 
             canvas = np.ones((int(h/2), int(w/2), 3), dtype='uint8') * 255
             image = draw_bodypose(canvas, candidate, subset)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
-            cv2.imwrite('data/TargetPoses/pose.png' + str(frame_counter), image)
-            cv2.imwrite('data/TargetFrames/frame.png' + str(frame_counter))
+            cv2.imwrite('data/TargetPoses/pose_' + str(frame_counter) + '.png', image)
+            cv2.imwrite('data/TargetFrames/frame_' + str(frame_counter) + '.png', frame)
             frame_counter += 1
-            print(frame_counter)
+            print(frame_counter, ' Written')
         else:
             break
     video.release()
