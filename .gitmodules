@@ -1,3 +1,6 @@
 [submodule "src/optim"]
 	path = src/optim
 	url = git@github.com:rgreenblatt/optim.git
+[submodule "src/pix2pixHD"]
+	path = src/pix2pixHD
+	url = https://github.com/NVIDIA/pix2pixHD
