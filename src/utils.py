@@ -16,7 +16,7 @@ sys.path.append(os.getcwd() + '/src/pytorch-openpose/')
 from python import body
 
 def get_body():
-    return Body('pytorch-openpose/model/body_pose_model.pth')
+    return body.Body(os.getcwd() + '/src/pytorch-openpose/model/body_pose_model.pth')
 
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
