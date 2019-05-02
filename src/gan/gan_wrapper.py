@@ -19,24 +19,24 @@ class GANWrapper:
         for pose,subset in zip(poses, subsets):
             canvas = np.ones(size, dtype='uint8')
             image = draw_bodypose(canvas, pose, subset)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            # image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             ret, image = cv2.threshold(image, 10, 255, cv2.THRESH_BINARY)
             images.append(image)
         return images
 
     def create_training_data(self, source_video, source_poses, source_subsets, save_dir):
         """ """ 
-        source_images = self.get_raw_images(source_video, rotate=True)
+        source_images = self.get_raw_images(source_video, rotate=False)
         pose_images = self.create_image_from_pose(source_poses, source_subsets) 
 
-        for i, s_img, p_img in enumerate(zip(source_images, pose_images)):
-            concat_img = np.concatenate((s_img, p_img)) 
+        for i, imgs in enumerate(zip(source_images, pose_images)):
+            s_img, p_img = imgs
+            print(s_img.shape, p_img.shape)
+            concat_img = np.concatenate((s_img, p_img), axis=1)
             print("Saving image ", i)
             cv2.imwrite(save_dir + "image " + str(i), concat_img)
 
-
-
-    def get_raw_images(self, source_video, rotate=True, size=(480, 720, 3):
+    def get_raw_images(self, source_video, rotate=True, size=(480, 720, 3)):
         """ """
         if os.path.isfile(source_video): 
             video = cv2.VideoCapture(source_video)
@@ -50,7 +50,7 @@ class GANWrapper:
             if ret:
                 if rotate:
                     frame = np.rot90(np.rot90(np.rot90(frame)))
-                frame = cv2.resize(frame, size)
+                frame = cv2.resize(frame, size[0:2])
                 images.append(frame)
             else:
                 break
