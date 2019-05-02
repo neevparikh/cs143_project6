@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
 
 import utils
 from options.train_options import TrainOptions
