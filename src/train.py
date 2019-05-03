@@ -1,4 +1,6 @@
+import numpy as np
 import torch
+import torch.nn as nn
 from torch.autograd import Variable
 
 import utils
@@ -12,6 +14,7 @@ from models.models import create_model
 # - Logging?
 # - TensorBoard?
 
+
 def train(config, writer, logger):
     config = config.opt
     data_set = CreateDataLoader(config).load_data()
@@ -22,10 +25,11 @@ def train(config, writer, logger):
     visualizer = Visualizer(config)
 
     step = 0
-    
+
     for epoch in range(config.epochs):
         for data in data_set:
             print("Step: ", step)
+            print(data["image"].shape)
             save_gen = (step + 1) % config.display_freq == 0
 
             losses, generated = model(Variable(data['label']),
