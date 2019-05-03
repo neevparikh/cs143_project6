@@ -1,6 +1,4 @@
-import numpy as np
 import torch
-import torch.nn as nn
 from torch.autograd import Variable
 
 import utils
@@ -13,7 +11,6 @@ from models.models import create_model
 #TODO:
 # - Logging?
 # - TensorBoard?
-
 
 def train(config, writer, logger):
     config = config.opt

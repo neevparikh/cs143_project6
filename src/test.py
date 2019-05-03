@@ -1,22 +1,8 @@
-import numpy as np
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
-from collections import OrderedDict
-import cv2
 import utils
-from torch.autograd import Variable 
-import util.util as util
 from data.data_loader import CreateDataLoader
-from util.visualizer import Visualizer
+from options.test_options import TestOptions
 from models.models import create_model
-from util import html
-
-
-#TODO
-# Load the model 
-# Evaluate the model again
-# Write the files or something ?
+import os
 
 def generate(writer, config, logger):
     config = config.opt
@@ -24,7 +10,9 @@ def generate(writer, config, logger):
     model = create_model(config)
 
     for i, data in enumerate(data_set):
-        minibatch = 1 
+        minibatch = 1
         generated = model.inference(data['label'], data['inst'])
-        imwrite( "../outputs/output_" + str(i) + ".png", generated)      
-    torch.cuda.empty_cache()
+        os.path.join("outputs", "output_{}.png".format(i), generated)
+
+if __name__ == '__main__':
+    generate(*utils.start_run(TestOptions))
