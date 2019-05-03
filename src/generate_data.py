@@ -19,14 +19,10 @@ def main():
     args = parser.parse_args()
     target = args.target
     rotated = args.rotated
-    if rotated:
-        size = (args.width, args.height)
-    else:
-        size = (args.height, args.width)
 
-    if os.path.isfile(target): 
+    if os.path.isfile(target):
         video = cv2.VideoCapture(target)
-    else: 
+    else:
         raise FileNotFoundError
 
     frame_counter = 0
@@ -38,10 +34,10 @@ def main():
         if ret:
             if rotated == "true":
                 frame = np.rot90(np.rot90(np.rot90(frame)))
-            frame = cv2.resize(frame, size)
+            frame = cv2.resize(frame, (args.width, args.height))
 
             candidate, subset = body_estimation(frame)
-            try: 
+            try:
                 if np.min(subset[:,19]) < 17:
                     print('Frame Dropped', frame_counter, np.min(subset[:,19]))
                     frame_counter += 1
@@ -51,9 +47,9 @@ def main():
                 frame_counter += 1
                 continue
 
-            canvas = np.ones(size + (3,), dtype='uint8') 
+            canvas = np.ones((args.height, args.width, 3), dtype='uint8')
             image = draw_bodypose(canvas, candidate, subset)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             cv2.imwrite('data/train_label/pose_' + str(frame_counter) + '.png', image)
             cv2.imwrite('data/train_img/frame_' + str(frame_counter) + '.png', frame)
             frame_counter += 1
