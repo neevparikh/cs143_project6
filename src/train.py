@@ -5,7 +5,6 @@ from torch.autograd import Variable
 
 import utils
 from options.train_options import TrainOptions
-from torch.autograd import Variable 
 import util.util as util
 from data.data_loader import CreateDataLoader
 from util.visualizer import Visualizer
@@ -15,11 +14,12 @@ from models.models import create_model
 # - Logging?
 # - TensorBoard?
 
+
 def train(config, writer, logger):
     config = config.opt
     data_set = CreateDataLoader(config).load_data()
-
     total_steps = config.epochs * len(data_set)
+    print(len(data_set), "# of Training Images")
 
     model = create_model(config)
     visualizer = Visualizer(config)
@@ -28,18 +28,20 @@ def train(config, writer, logger):
 
     for epoch in range(config.epochs):
         for data in data_set:
-
+            print("Step: ", step)
             save_gen = (step + 1) % config.display_freq == 0
 
-            losses, generated = model(Variable(data['label']),
-                                      Variable(data['inst']),
-                                      Variable(data['image']),
-                                      Variable(data['feat']),
+            losses, generated = model(Variable(data['label'].float()),
+                                      Variable(data['inst'].float()),
+                                      Variable(data['feat'].float()),
+                                      Variable(data['image'].float()),
                                       infer=save_gen)
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
                 x, int) else x for x in losses]
             loss_dict = dict(zip(model.module.loss_names, losses))
+
+            print(loss_dict)
 
             # calculate final loss scalar
             loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) * 0.5
