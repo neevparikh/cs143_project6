@@ -22,16 +22,16 @@ def train(config, writer, logger):
     visualizer = Visualizer(config)
 
     step = 0
-
+    
     for epoch in range(config.epochs):
         for data in data_set:
             print("Step: ", step)
             save_gen = (step + 1) % config.display_freq == 0
 
-            losses, generated = model(Variable(data['label'].float()),
-                                      Variable(data['inst'].float()),
-                                      Variable(data['feat'].float()),
-                                      Variable(data['image'].float()),
+            losses, generated = model(Variable(data['label']),
+                                      Variable(data['inst']),
+                                      Variable(data['feat']),
+                                      Variable(data['image']),
                                       infer=save_gen)
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
