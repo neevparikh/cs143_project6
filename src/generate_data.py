@@ -19,7 +19,10 @@ def main():
     args = parser.parse_args()
     target = args.target
     rotated = args.rotated
-    size = (args.height, args.width)
+    if rotated:
+        size = (args.width, args.height)
+    else:
+        size = (args.height, args.width)
 
     if os.path.isfile(target): 
         video = cv2.VideoCapture(target)
