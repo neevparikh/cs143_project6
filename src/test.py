@@ -4,7 +4,7 @@ from options.test_options import TestOptions
 from models.models import create_model
 import os
 
-def generate(writer, config, logger):
+def generate(config, writer, logger):
     config = config.opt
     data_set = CreateDataLoader(config).load_data()
     model = create_model(config)

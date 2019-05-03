@@ -28,27 +28,22 @@ def train(config, writer, logger):
 
     for epoch in range(config.epochs):
         for data in data_set:
-            print("Step: ", step)
-            print(data["image"].shape)
             save_gen = (step + 1) % config.display_freq == 0
 
             losses, generated = model(Variable(data['label']),
                                       Variable(data['inst']),
-                                      Variable(data['feat']),
                                       Variable(data['image']),
+                                      Variable(data['feat']),
                                       infer=save_gen)
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
                 x, int) else x for x in losses]
             loss_dict = dict(zip(model.module.loss_names, losses))
 
-            print(loss_dict)
-
             # calculate final loss scalar
             loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) * 0.5
             loss_G = loss_dict['G_GAN'] + loss_dict.get('G_GAN_Feat', 0) + \
                 loss_dict.get('G_VGG', 0)
-
 
             # update generator weights\n",
             model.module.optimizer_G.zero_grad()
@@ -63,8 +58,10 @@ def train(config, writer, logger):
             if (step + 1) % config.print_freq == 0 or step == total_steps - 1:
                 logger.info("Train: [{:2d}/{}] Step {:03d}/{:03d}".format(
                     epoch + 1, config.epochs, step, len(data_set) - 1))
+                logger.info("Loss D: {},  Loss G {}".format(loss_D.item(),
+                                                            loss_G.item()))
 
-            if (step + 1) % config.save_freq == 0 or step == total_steps - 1:
+            if (step + 1) % config.save_latest_freq == 0 or step == total_steps - 1:
                 model.module.save('latest')
                 model.module.save(epoch)
 

@@ -15,10 +15,12 @@ def main():
     parser.add_argument("--width", type=int, default=512,
                         help="width for saved video")
     parser.add_argument("--rotated", choices=["true", "false"], required=True)
+    parser.add_argument("--phase", choices=["train", "test"], required=True)
 
     args = parser.parse_args()
     target = args.target
     rotated = args.rotated
+    phase = args.phase
 
     if os.path.isfile(target):
         video = cv2.VideoCapture(target)
@@ -50,8 +52,13 @@ def main():
             canvas = np.ones((args.height, args.width, 3), dtype='uint8')
             image = draw_bodypose(canvas, candidate, subset)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            cv2.imwrite('data/train_label/pose_' + str(frame_counter) + '.png', image)
-            cv2.imwrite('data/train_img/frame_' + str(frame_counter) + '.png', frame)
+            if phase =='train':
+                cv2.imwrite('data/train_label/pose_' + str(frame_counter) + '.png', image)
+                cv2.imwrite('data/train_img/frame_' + str(frame_counter) + '.png', frame)
+            elif phase == 'test':
+                cv2.imwrite('data/test_label/pose_' + str(frame_counter) + '.png', image)
+                cv2.imwrite('data/test_img/frame_' + str(frame_counter) + '.png', frame)
+
             frame_counter += 1
             print(frame_counter, ' Written')
         else:
