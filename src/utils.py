@@ -25,23 +25,23 @@ class PoseNormalizer:
         """
             source :: dict<ndarray> :: dict of source left ankle array and source right ankle array
             target :: dict<ndarray> :: dict of target left ankle array and target right ankle array
-            epsilon :: float [0, 1] :: value for the clustering in calculating the min, paper suggests 0.7  
+            epsilon :: float [0, 1] :: value for the clustering in calculating the min, paper suggests 0.7
         """
 
         self.inclusion_threshold = inclusion_threshold
-        self.s_left, self.s_right = self._include_ground_only(source["left"], source["right"]) 
-        self.t_left, self.t_right = self._include_ground_only(target["left"], target["right"]) 
+        self.s_left, self.s_right = self._include_ground_only(source["left"], source["right"])
+        self.t_left, self.t_right = self._include_ground_only(target["left"], target["right"])
         self.epsilon = epsilon
         self.statistics = {}
         self._compute_statistics(np.append(self.s_left, self.s_right), "source")
         self._compute_statistics(np.append(self.t_left, self.t_right), "target")
 
-    
+
     def _include_ground_only(self, left_ankle_array, right_ankle_array):
         """ remove the frames where the leg is raised """
 
         num_frames = len(left_ankle_array)
-        left_grounded = [] 
+        left_grounded = []
         right_grounded = []
 
         for i in range(num_frames):
@@ -91,10 +91,10 @@ class PoseNormalizer:
         mn = self._get_min_ankle_position(ankle_array, med, mx)
         self.statistics[ankle_name]["min"] = mn
         self.statistics[ankle_name]["close"], self.statistics[ankle_name]["far"] = self._get_close_far_position(ankle_array, mx, mn)
-    
+
     def _get_median_ankle_position(self, ankle_array):
         return np.median(ankle_array, overwrite_input=False)
-    
+
     def _get_min_ankle_position(self, ankle_array, med, mx):
         cluster = np.array([p for p in ankle_array if (p < med) and (np.abs(np.abs(p - med) - np.abs(mx - med)) < self.epsilon)])
         return np.max(cluster)
@@ -109,10 +109,10 @@ class PoseNormalizer:
 
     def transform_pose(self, source, target):
         """
-            source :: ndarray :: numpy array of all the pose estimates as returned by pose estimation of source video 
+            source :: ndarray :: numpy array of all the pose estimates as returned by pose estimation of source video
             target :: ndarray :: numpy array of all the pose estimates as returned by pose estimation of target video
-            
-            Returns :: normalized target in the same format 
+
+            Returns :: normalized target in the same format
         """
 
         source_ankles = {"left": source[13, 1], "right": source[10, 1]}
@@ -127,7 +127,7 @@ class PoseNormalizer:
 
     def transform_pose_global(self, source_all, target_all):
         """
-            source :: list<ndarray> :: numpy array of all the pose estimates for all the frames of the source 
+            source :: list<ndarray> :: numpy array of all the pose estimates for all the frames of the source
             target :: list<ndarray> :: numpy array of all the pose estimates for all the frames of the target
 
             Returns :: globally normalized in the same format
@@ -273,7 +273,7 @@ def draw_bodypose(canvas, pose, subset):
             polygon = cv2.ellipse2Poly((int(mY), int(mX)), (int(length / 2), stickwidth), int(angle), 0, 360, 1)
             cv2.fillConvexPoly(cur_canvas, polygon, colors[i])
             canvas = cur_canvas
-    
+
     return canvas
 
 def get_pose_estimate(video_location, regen=True, rotate=True):
@@ -283,12 +283,12 @@ def get_pose_estimate(video_location, regen=True, rotate=True):
     Returns python list of poses for the video
     """
 
-    if os.path.isfile(video_location): 
+    if os.path.isfile(video_location):
         video = cv2.VideoCapture(video_location)
-    else: 
-        raise FileNotFoundError 
+    else:
+        raise FileNotFoundError
 
-    body_estimation = body.Body('pytorch-openpose/model/body_pose_model.pth')
+    body_estimation = get_body()
 
     # Initialize arrays to store pose information
     poses = []
@@ -298,8 +298,8 @@ def get_pose_estimate(video_location, regen=True, rotate=True):
     frame_counter = 0
 
     if regen:
-        while(True): 
-            # reading from frame 
+        while(True):
+            # reading from frame
             ret, frame = video.read()
 
             if ret:
@@ -321,7 +321,7 @@ def get_pose_estimate(video_location, regen=True, rotate=True):
                 subsets.append(subset)
 
                 frame_counter += 1
-                print("Frame: ", frame_counter)
+                print("Frame: ", frame_counter, flush=True)
             else:
                 np.save("poses.npy", np.array(poses))
                 np.save("subsets.npy", np.array(subsets))
@@ -334,7 +334,8 @@ def get_pose_estimate(video_location, regen=True, rotate=True):
 
     return poses, subsets
 
-def get_pose_normed_estimate(source, target, regen=True, rotate=True, height=512, width=256):
+def get_pose_normed_estimate(source, target, regen=True, rotate=True,
+                             height=512, width=256, max_frames=float('inf')):
     """
     source :: location of source video
     target :: location of target video
@@ -344,10 +345,10 @@ def get_pose_normed_estimate(source, target, regen=True, rotate=True, height=512
     if os.path.isfile(source) and os.path.isfile(target):
         source_video = cv2.VideoCapture(source)
         target_video = cv2.VideoCapture(target)
-    else: 
-        raise FileNotFoundError 
+    else:
+        raise FileNotFoundError
 
-    body_estimation = body.Body('pytorch-openpose/model/body_pose_model.pth')
+    body_estimation = get_body()
 
     # Initialize arrays to store pose information
     source_poses = []
@@ -364,22 +365,22 @@ def get_pose_normed_estimate(source, target, regen=True, rotate=True, height=512
     target_frames = []
 
     # Frame counter
-    frame_counter = 0
+    frame_counter = 1
 
     if regen:
-        while(True): 
-            # reading from frame 
-            ret_source, source_frame = source_video.read() 
+        while(True):
+            # reading from frame
+            ret_source, source_frame = source_video.read()
             ret_target, target_frame = target_video.read()
 
-            if ret_source and ret_target:
+            if ret_source and ret_target and frame_counter < max_frames:
                 if rotate:
                     source_frame = np.rot90(np.rot90(np.rot90(source_frame)))
                     target_frame = np.rot90(np.rot90(np.rot90(target_frame)))
 
                 source_frame = cv2.resize(source_frame, (int(width), int(height)))
                 target_frame = cv2.resize(target_frame, (int(width), int(height)))
-                
+
                 source_frames.append(source_frame)
                 target_frames.append(target_frame)
 
@@ -428,7 +429,7 @@ def get_pose_normed_estimate(source, target, regen=True, rotate=True, height=512
         "right": np.array(target_right)
         }
 
-        pose_normalizer = PoseNormalizer(source_dict, target_dict, epsilon=3)
+        pose_normalizer = PoseNormalizer(source_dict, target_dict, epsilon=5)
         transformed_all = pose_normalizer.transform_pose_global(source_poses, target_poses)
         np.save("normed_source_pose.npy", np.array(transformed_all))
 
@@ -440,13 +441,13 @@ def get_pose_normed_estimate(source, target, regen=True, rotate=True, height=512
         transformed_all = np.load("normed_source_pose.npy")
 
     data = {
-        "normed_source": transformed_all, 
-        "source_pose": source_poses, 
-        "source_sub": source_subsets, 
-        "target_pose": target_poses, 
-        "target_sub": target_subsets, 
-        "source_frame": source_frames, 
+        "normed_source": transformed_all,
+        "source_pose": source_poses,
+        "source_sub": source_subsets,
+        "target_pose": target_poses,
+        "target_sub": target_subsets,
+        "source_frame": source_frames,
         "target_frame": target_frames
     }
-   
+
     return data

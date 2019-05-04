@@ -30,15 +30,14 @@ def train(config, writer, logger):
     for epoch in range(config.epochs):
         print("epoch: ", epoch)
         for data in data_set:
-            save_gen = (step + 1) % config.display_freq == 0
+            # save_gen = (step + 1) % config.display_freq == 0
+            save_gen = True
 
             losses, generated = model(Variable(data['label']),
                                       Variable(data['inst']),
                                       Variable(data['image']),
                                       Variable(data['feat']),
                                       infer=save_gen)
-
-            print(generated)
 
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
@@ -66,26 +65,16 @@ def train(config, writer, logger):
                 logger.info("Loss D: {},  Loss G {}, Loss VGG {}".format(
                     loss_D.item(), loss_dict['G_GAN'].item(), loss_dict['G_VGG'].item()))
 
-            # visuals = OrderedDict([('input_label',
-            #                         util.tensor2label(data['label'][0],
-            #                                           config.label_nc)),
-            #                        ('synthesized_image', util.tensor2im(
-            #                            generated.data[0])),
-            #                        ('real_image',
-            #                         util.tensor2im(data['image'][0]))])
+            if save_gen:
+                visuals = OrderedDict([('input_label',
+                                        util.tensor2label(data['label'][0],
+                                                          config.label_nc)),
+                                       ('synthesized_image', util.tensor2im(
+                                           generated.data[0])),
+                                       ('real_image',
+                                        util.tensor2im(data['image'][0]))])
 
-            # visualizer.display_current_results(visuals, epoch, total_steps)
-
-            # if save_gen:
-            #     visuals = OrderedDict([('input_label',
-            #                             util.tensor2label(data['label'][0],
-            #                                               config.label_nc)),
-            #                            ('synthesized_image', util.tensor2im(
-            #                                generated.data[0])),
-            #                            ('real_image',
-            #                             util.tensor2im(data['image'][0]))])
-
-            #     visualizer.display_current_results(visuals, epoch, total_steps)
+                visualizer.display_current_results(visuals, epoch, total_steps)
 
 
             if (step + 1) % config.save_latest_freq == 0 or step == total_steps - 1:
