@@ -1,8 +1,10 @@
 import utils
+import numpy as np
 from data.data_loader import CreateDataLoader
 from options.test_options import TestOptions
 from models.models import create_model
 import os
+from torchvision.transforms import ToPILImage
 from cv2 import imwrite
 
 def generate(config, writer, logger):
@@ -13,7 +15,10 @@ def generate(config, writer, logger):
     for i, data in enumerate(data_set):
         minibatch = 1
         generated = model.inference(data['label'], data['inst'])
-        imwrite(os.path.join("outputs", "output_{}.png".format(i)), generated)
+        generated_img = generated.detach().cpu().numpy()[0]
+        generated_img = np.moveaxis(generated_img, [0, 1, 2], [2, 1, 0])
+        print(generated_img.shape)
+        imwrite(os.path.join("outputs", "output_{}.png".format(i)), generated_img)
 
 if __name__ == '__main__':
     generate(*utils.start_run(TestOptions))
