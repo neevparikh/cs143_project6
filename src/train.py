@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+from collections import OrderedDict
 
 import utils
 from options.train_options import TrainOptions
@@ -58,8 +59,20 @@ def train(config, writer, logger):
             if (step + 1) % config.print_freq == 0 or step == total_steps - 1:
                 logger.info("Train: [{:2d}/{}] Step {:03d}/{:03d}".format(
                     epoch + 1, config.epochs, step, len(data_set) - 1))
-                logger.info("Loss D: {},  Loss G {}".format(loss_D.item(),
-                                                            loss_G.item()))
+                logger.info("Loss D: {},  Loss G {}, Loss VGG {}".format(
+                    loss_D.item(), loss_dict['G_GAN'].item(), loss_dict['G_VGG'].item()))
+
+            if save_gen:
+                visuals = OrderedDict([('input_label',
+                                        util.tensor2label(data['label'][0],
+                                                          config.label_nc)),
+                                       ('synthesized_image', util.tensor2im(
+                                           generated.data[0])),
+                                       ('real_image',
+                                        util.tensor2im(data['image'][0]))])
+
+                visualizer.display_current_results(visuals, epoch, total_steps)
+
 
             if (step + 1) % config.save_latest_freq == 0 or step == total_steps - 1:
                 model.module.save('latest')
