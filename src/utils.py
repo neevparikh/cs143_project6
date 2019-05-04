@@ -334,7 +334,7 @@ def get_pose_estimate(video_location, regen=True, rotate=True):
 
     return poses, subsets
 
-def get_pose_normed_estimate(source, target, regen=True, rotate=True):
+def get_pose_normed_estimate(source, target, regen=True, rotate=True, height=512, width=256):
     """
     source :: location of source video
     target :: location of target video
@@ -360,6 +360,8 @@ def get_pose_normed_estimate(source, target, regen=True, rotate=True):
     source_right = []
     target_left = []
     target_right = []
+    source_frames = []
+    target_frames = []
 
     # Frame counter
     frame_counter = 0
@@ -375,9 +377,11 @@ def get_pose_normed_estimate(source, target, regen=True, rotate=True):
                     source_frame = np.rot90(np.rot90(np.rot90(source_frame)))
                     target_frame = np.rot90(np.rot90(np.rot90(target_frame)))
 
-                h, w, _ = source_frame.shape
-                source_frame = cv2.resize(source_frame, (int(w/2), int(h/2)))
-                target_frame = cv2.resize(target_frame, (int(w/2), int(h/2)))
+                source_frame = cv2.resize(source_frame, (int(width), int(height)))
+                target_frame = cv2.resize(target_frame, (int(width), int(height)))
+                
+                source_frames.append(source_frame)
+                target_frames.append(target_frame)
 
                 # Grab pose estimations for both video frames
                 source_candidate, source_subset = body_estimation(source_frame)
@@ -434,5 +438,15 @@ def get_pose_normed_estimate(source, target, regen=True, rotate=True):
         source_subsets = pickle.load(open("source_subsets.pkl", "rb"))
         target_subsets = pickle.load(open("target_subsets.pkl", "rb"))
         transformed_all = np.load("normed_source_pose.npy")
+
+    data = {
+        "normed_source": transformed_all, 
+        "source_pose": source_poses, 
+        "source_sub": source_subsets, 
+        "target_pose": target_poses, 
+        "target_sub": target_subsets, 
+        "source_frame": source_frames, 
+        "target_frame": target_frames
+    }
    
-    return transformed_all, source_poses, source_subsets, target_poses, target_subsets
+    return data
