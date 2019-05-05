@@ -38,12 +38,14 @@ def main():
         nonlocal target_counter_index
 
         if counter == target_indexes[target_counter_index]:
-            cv2.imwrite(train_path_img(counter), img)
+            cv2.imwrite(train_path_img(target_counter_index), img)
 
-            save_pose(target_poses[counter], target_subsets[counter],
-                      train_path_label(counter), args.height, args.width)
+            save_pose(target_poses[target_counter_index],
+                      target_subsets[target_counter_index],
+                      train_path_label(target_counter_index),
+                      args.height, args.width)
 
-            print("train writing:", counter)
+            print("train writing:", target_counter_index)
 
             target_counter_index += 1
 
