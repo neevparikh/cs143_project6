@@ -256,10 +256,6 @@ def draw_bodypose(canvas, pose, subset):
                [10, 11], [2, 12], [12, 13], [13, 14], [2, 1], [1, 15], [15, 17],
                [1, 16], [16, 18], [3, 17], [6, 18]]
 
-    # colors = [[10, 10, 10], [20, 20, 20], [30, 30, 30], [40, 40, 40], [50, 50, 50], [60, 60, 60], [70, 70, 70], \
-    #          [80, 80, 80], [80, 80, 80], [90, 90, 90], [100, 100, 100], [110, 110, 110], [120, 120, 120], [130, 130, 130], \
-    #          [140, 140, 140], [150, 150, 150], [160, 160, 160], [170, 170, 170]]
-
     colors = [[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6],
               [7, 7, 7], [8, 8, 8], [8, 8, 8], [9, 9, 9], [10, 10, 10],
               [11, 11, 11], [12, 12, 12], [13, 13, 13], [14, 14, 14],
@@ -311,7 +307,6 @@ def transform_frame(frame, rotate, width, height):
 
     return frame
 
-
 def get_train_pose_estimate(target, regen=True, rotate=True, height=512,
                             width=256, max_frames=float('inf')):
 
@@ -336,7 +331,6 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
         assert os.path.isfile(target)
 
     body_estimation = get_body()
-
 
     if source is not None:
         source_poses = []
@@ -374,12 +368,12 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
                 right.append(candidate[10, 1])
                 print(name, 'frame kept:', counter, flush=True)
 
-            return loop_func
+        return loop_func
 
     if source is not None:
 
         if regen_source:
-            loop_frame(target, max_frames;
+            loop_frame(source, max_frames,
                        make_loop_func(source_poses, source_subsets, source_left,
                                       source_right, source_indexes, 'source'))
 
@@ -399,7 +393,7 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
 
     if target is not None:
         if regen_target:
-            loop_frame(target, max_frames;
+            loop_frame(target, max_frames,
                        make_loop_func(target_poses, target_subsets, target_left,
                                       target_right, target_indexes, 'target'))
 
@@ -417,7 +411,7 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
             ret['target_subsets'] = target_subsets
             ret['target_indexes'] = target_indexes
 
-    if source is not None and source is not None:
+    if source is not None and target is not None:
         if regen_norm:
             source_dict = {
                 "left": np.array(source_left),
@@ -428,7 +422,6 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
                 "left": np.array(target_left),
                 "right": np.array(target_right)
             }
-
 
             pose_normalizer = PoseNormalizer(source_dict, target_dict,
                                              epsilon=5)
