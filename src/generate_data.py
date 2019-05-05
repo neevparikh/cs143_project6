@@ -47,9 +47,13 @@ def main():
     source_frames = data["source_frame"]
     target_frames = data["target_frame"]
 
-    for i in range(len(source_frames)):
-        canvas = np.ones((args.height, args.width, 3), dtype='uint8')
-        if phase =='train':
+    if phase =='train':
+
+        assert len(target_poses) == len(target_subsets)
+        assert len(target_frames) == len(target_subsets)
+
+        for i in range(len(target_poses)):
+            canvas = np.ones((args.height, args.width, 3), dtype='uint8')
 
             target_image = draw_bodypose(canvas, target_poses[i],
                                          target_subsets[i])
@@ -59,8 +63,15 @@ def main():
                         target_image)
             cv2.imwrite('data/train_img/target_frame_' + str(i) + '.png',
                         target_frames[i])
+            print('Written', i, flush=True)
 
-        elif phase == 'test':
+    elif phase == 'test':
+
+        assert len(normed_source) == len(source_subsets)
+        assert len(source_frames) == len(source_subsets)
+
+        for i in range(len(source_frames)):
+            canvas = np.ones((args.height, args.width, 3), dtype='uint8')
 
             source_image = draw_bodypose(canvas, normed_source[i],
                                          source_subsets[i])
@@ -71,7 +82,8 @@ def main():
             cv2.imwrite('data/test_img/source_frame_' + str(i) + '.png',
                         source_frames[i])
 
-        print('Written', i, flush=True)
+            print('Written', i, flush=True)
+
     video.release()
 
 if __name__ == "__main__":
