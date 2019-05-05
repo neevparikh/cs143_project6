@@ -30,8 +30,8 @@ def train(config, writer, logger):
     for epoch in range(config.epochs):
         print("epoch: ", epoch)
         for data in data_set:
-            # save_gen = (step + 1) % config.display_freq == 0
-            save_gen = True
+            save_gen = (step + 1) % config.display_freq == 0
+            # save_gen = True
 
             losses, generated = model(Variable(data['label']),
                                       Variable(data['inst']),

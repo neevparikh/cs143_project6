@@ -3,7 +3,8 @@ import sys
 import cv2
 import argparse
 import numpy as np
-from utils import draw_bodypose, get_body, get_pose_normed_estimate
+from utils import (draw_bodypose, get_body, get_pose_normed_estimate,
+                   transform_frame, loop_frame)
 
 def main():
     # Creates command line parser
@@ -31,60 +32,63 @@ def main():
     source = args.source
     max_frames = args.max_frames
 
-    if os.path.isfile(target):
-        video = cv2.VideoCapture(target)
-    else:
-        raise FileNotFoundError
-
     data = get_pose_normed_estimate(source, target, regen=regen,
                                     rotate=rotated, max_frames=max_frames,
                                     height=height, width=width)
 
     normed_source = data["normed_source"]
-    source_subsets = data["source_sub"]
-    target_poses = data["target_pose"]
-    target_subsets = data["target_sub"]
-    source_frames = data["source_frame"]
-    target_frames = data["target_frame"]
+    source_subsets = data["source_subsets"]
+    target_poses = data["target_poses"]
+    target_subsets = data["target_subsets"]
+    source_indexes = data["source_indexes"]
+    target_indexes = data["target_indexes"]
+
+    def make_get_path(is_train, is_label):
+        type_name = 'label' if is_label else 'img'
+        path_b = "data/{}_{}/{}_".format(('train' if is_train else 'test'),
+                                         type_name, type_name)
+
+        def get_path(counter, path_b=path_b):
+            return "{}{}.png".format(path_b, counter)
+
+        return get_path
+
+    def save_pose(pose, subset, path):
+        canvas = np.ones((args.height, args.width, 3), dtype='uint8')
+        target_image = draw_bodypose(canvas, pose, subset)
+        cv2.imwrite(path, target_image)
 
     if phase =='train':
 
         assert len(target_poses) == len(target_subsets)
-        assert len(target_frames) == len(target_subsets)
+        assert len(target_frames_indexes) == len(target_subsets)
 
-        for i in range(len(target_poses)):
-            canvas = np.ones((args.height, args.width, 3), dtype='uint8')
+        target_counter_index = 0
 
-            target_image = draw_bodypose(canvas, target_poses[i],
-                                         target_subsets[i])
-            target_image = cv2.cvtColor(target_image, cv2.COLOR_BGR2GRAY)
+        train_path_label = make_get_path(True, True)
+        train_path_img = make_get_path(True, False)
 
-            cv2.imwrite('data/train_label/target_pose_' + str(i) + '.png',
-                        target_image)
-            cv2.imwrite('data/train_img/target_frame_' + str(i) + '.png',
-                        target_frames[i])
-            print('Written', i, flush=True)
+        def loop_target(frame, counter):
+            if counter == target_indexes[target_counter_index]:
+                cv2.imwrite(train_path_img(counter), frame)
 
-    elif phase == 'test':
+                save_pose(target_poses[counter], target_subsets[counter],
+                          train_path_label(counter))
 
-        assert len(normed_source) == len(source_subsets)
-        assert len(source_frames) == len(source_subsets)
+                print("train writing:", counter)
 
-        for i in range(len(source_frames)):
-            canvas = np.ones((args.height, args.width, 3), dtype='uint8')
+                target_counter_index += 1
 
-            source_image = draw_bodypose(canvas, normed_source[i],
-                                         source_subsets[i])
-            source_image = cv2.cvtColor(source_image, cv2.COLOR_BGR2GRAY)
+        loop_frame(target, loop_target)
 
-            cv2.imwrite('data/test_label/source_pose_' + str(i) + '.png',
-                        source_image)
-            cv2.imwrite('data/test_img/source_frame_' + str(i) + '.png',
-                        source_frames[i])
+    else:
+        test_path_img = make_get_path(False, True)
 
-            print('Written', i, flush=True)
+        for pose, subsets, index in zip(normed_source, source_subsets,
+                                        source_indexes):
+            save_pose(pose, subsets, test_path_label(index))
 
-    video.release()
+            print('test', i, flush=True)
 
 if __name__ == "__main__":
     main()

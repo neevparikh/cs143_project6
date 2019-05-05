@@ -103,7 +103,7 @@ class PoseNormalizer:
             print(e)
             print("Warning: Minimum as defined failed, reverting to np.min")
             mn = np.min(ankle_array)
-        return mn 
+        return mn
 
     def _get_close_far_position(self, ankle_array, mx, mn):
         cluster_far = np.array([p for p in ankle_array if (np.abs(p - mn) < self.epsilon)])
@@ -252,17 +252,18 @@ def draw_bodypose(canvas, pose, subset):
     subset :: subset data of the person
     """
     stickwidth = 4
-    limbSeq = [[2, 3], [2, 6], [3, 4], [4, 5], [6, 7], [7, 8], [2, 9], [9, 10], \
-               [10, 11], [2, 12], [12, 13], [13, 14], [2, 1], [1, 15], [15, 17], \
+    limbSeq = [[2, 3], [2, 6], [3, 4], [4, 5], [6, 7], [7, 8], [2, 9], [9, 10],
+               [10, 11], [2, 12], [12, 13], [13, 14], [2, 1], [1, 15], [15, 17],
                [1, 16], [16, 18], [3, 17], [6, 18]]
 
     # colors = [[10, 10, 10], [20, 20, 20], [30, 30, 30], [40, 40, 40], [50, 50, 50], [60, 60, 60], [70, 70, 70], \
     #          [80, 80, 80], [80, 80, 80], [90, 90, 90], [100, 100, 100], [110, 110, 110], [120, 120, 120], [130, 130, 130], \
     #          [140, 140, 140], [150, 150, 150], [160, 160, 160], [170, 170, 170]]
 
-    colors = [[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6], [7, 7, 7], \
-              [8, 8, 8], [8, 8, 8], [9, 9, 9], [10, 10, 10], [11, 11, 11], [12, 12, 12], [13, 13, 13], \
-              [14, 14, 14], [15, 15, 15], [16, 16, 16], [17, 17, 17]]
+    colors = [[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6],
+              [7, 7, 7], [8, 8, 8], [8, 8, 8], [9, 9, 9], [10, 10, 10],
+              [11, 11, 11], [12, 12, 12], [13, 13, 13], [14, 14, 14],
+              [15, 15, 15], [16, 16, 16], [17, 17, 17]]
 
     num_pose_points = 17
 
@@ -278,184 +279,167 @@ def draw_bodypose(canvas, pose, subset):
             mY = np.mean(Y)
             length = ((X[0] - X[1]) ** 2 + (Y[0] - Y[1]) ** 2) ** 0.5
             angle = math.degrees(math.atan2(X[0] - X[1], Y[0] - Y[1]))
-            polygon = cv2.ellipse2Poly((int(mY), int(mX)), (int(length / 2), stickwidth), int(angle), 0, 360, 1)
+            polygon = cv2.ellipse2Poly((int(mY), int(mX)),
+                                       (int(length / 2), stickwidth),
+                                       int(angle), 0, 360, 1)
             cv2.fillConvexPoly(cur_canvas, polygon, colors[i])
             canvas = cur_canvas
 
     return canvas
 
-def get_pose_estimate(video_location, regen=True, rotate=True):
-    """
-    video_location :: location of video
-    regen :: to regenerate or use pickles
-    Returns python list of poses for the video
-    """
+def loop_frame(video_path, max_frames, func):
+    video = cv2.VideoCapture(video_path)
+    frame = None
 
-    if os.path.isfile(video_location):
-        video = cv2.VideoCapture(video_location)
-    else:
-        raise FileNotFoundError
+    def get_frame():
+        ret, frame = video.read()
+        return ret
+
+    counter = 0
+
+    while(counter < max_frames and get_frame()):
+        func(frame, counter)
+        counter += 1
+
+    video.release()
+
+def transform_frame(frame, rotate, width, height):
+    if rotate:
+        frame = np.rot90(np.rot90(np.rot90(frame)))
+
+    frame = cv2.resize(frame, (int(width), int(height)))
+
+    return frame
+
+
+def get_train_pose_estimate(target, regen=True, rotate=True, height=512,
+                            width=256, max_frames=float('inf')):
+
+    return get_pose_normed_estimate(None, target, regen, None, None, rotate,
+                                    height, width, max_frames)
+
+def get_test_pose_estimate(source, target, regen_source=True, regen_target=True,
+                           regen_norm=True, rotate=True, height=512,
+                            width=256, max_frames=float('inf')):
+
+    return get_pose_normed_estimate(source, target, regen_source, regen_target,
+                                    regen_norm, rotate, height, width,
+                                    max_frames)
+
+def get_pose_normed_estimate(source, target, regen_source, regen_target,
+                             regen_norm, rotate, height, width,
+                             max_frames):
+    if source is not None:
+        assert os.path.isfile(source)
+
+    if target is not None:
+        assert os.path.isfile(target)
 
     body_estimation = get_body()
 
-    # Initialize arrays to store pose information
-    poses = []
-    subsets = []
 
-    # Frame counter
-    frame_counter = 0
+    if source is not None:
+        source_poses = []
+        source_subsets = []
 
-    if regen:
-        while(True):
-            # reading from frame
-            ret, frame = video.read()
+        source_left = []
+        source_right = []
 
-            if ret:
-                if rotate:
-                    frame = np.rot90(np.rot90(np.rot90(frame)))
-                h, w, _ = frame.shape
-                frame = cv2.resize(frame, (int(w/2), int(h/2)))
+        source_indexes = []
 
-                # Grab pose estimations for both video frames
-                candidate, subset = body_estimation(frame)
+    if target is not None:
+        target_poses = []
+        target_subsets = []
 
-                if np.min(subset[:,19]) < 18:
-                    print('Frame Dropped', frame_counter)
-                    frame_counter += 1
-                    continue
+        target_left = []
+        target_right = []
 
-                # Put pose estimations into memory
+        target_indexes = []
+
+    ret = {}
+
+    def make_loop_func(poses, subsets, left, right, indexes, name):
+        def loop_func(frame, counter, poses=poses, subsets=subsets,
+                      left=left, right=right, indexes=indexes, name=name):
+            frame = transform_frame(frame, rotate, width, height)
+            candidate, subset = body_estimation(frame)
+
+            if np.min(subset[:,19]) < 18:
+                print(name, 'frame dropped', counter, flush=True)
+            else:
+                indexes.append(counter)
                 poses.append(candidate)
                 subsets.append(subset)
+                left.append(candidate[13, 1])
+                right.append(candidate[10, 1])
+                print(name, 'frame kept:', counter, flush=True)
 
-                frame_counter += 1
-                print("Frame: ", frame_counter, flush=True)
-            else:
-                np.save("poses.npy", np.array(poses))
-                np.save("subsets.npy", np.array(subsets))
-                break
+            return loop_func
 
-        video.release()
-    else:
-        poses = np.load("poses.npy", allow_pickle=True)
-        subsets = np.load("subsets.npy", allow_pickle=True)
+    if source is not None:
 
-    return poses, subsets
+        if regen_source:
+            loop_frame(target, max_frames;
+                       make_loop_func(source_poses, source_subsets, source_left,
+                                      source_right, source_indexes, 'source'))
 
-def get_pose_normed_estimate(source, target, regen=True, rotate=True,
-                             height=512, width=256, max_frames=float('inf')):
-    """
-    source :: location of source video
-    target :: location of target video
-    regen :: to regenerate or use pickles
-    Returns numpy array of normalized poses for the source
-    """
-    if os.path.isfile(source) and os.path.isfile(target):
-        source_video = cv2.VideoCapture(source)
-        target_video = cv2.VideoCapture(target)
-    else:
-        raise FileNotFoundError
+            np.save("source_poses.npy", source_poses)
+            np.save("source_subsets.npy", source_subsets)
+            np.save("source_indexes.npy", source_indexes)
+            ret['source_poses'] = source_poses
+            ret['source_subsets'] = source_subsets
+            ret['source_indexes'] = source_indexes
+        else:
+            source_poses = np.load("source_poses.npy")
+            source_subsets = np.load("source_subsets.npy")
+            source_indexes = np.load("source_indexes.npy")
+            ret['source_poses'] = source_poses
+            ret['source_subsets'] = source_subsets
+            ret['source_indexes'] = source_indexes
 
-    body_estimation = get_body()
+    if target is not None:
+        if regen_target:
+            loop_frame(target, max_frames;
+                       make_loop_func(target_poses, target_subsets, target_left,
+                                      target_right, target_indexes, 'target'))
 
-    # Initialize arrays to store pose information
-    source_poses = []
-    target_poses = []
-    source_subsets = []
-    target_subsets = []
+            np.save("target_poses.npy", target_poses)
+            np.save("target_subsets.npy", target_subsets)
+            np.save("target_indexes.npy", target_indexes)
+            ret['target_poses'] = target_poses
+            ret['target_subsets'] = target_subsets
+            ret['target_indexes'] = target_indexes
+        else:
+            target_poses = np.load("target_poses.npy")
+            target_subsets = np.load("target_subsets.npy")
+            target_indexes = np.load("target_indexes.npy")
+            ret['target_poses'] = target_poses
+            ret['target_subsets'] = target_subsets
+            ret['target_indexes'] = target_indexes
 
-    # Initialize arrays for PoseNormalizer
-    source_left = []
-    source_right = []
-    target_left = []
-    target_right = []
-    source_frames = []
-    target_frames = []
+    if source is not None and source is not None:
+        if regen_norm:
+            source_dict = {
+                "left": np.array(source_left),
+                "right": np.array(source_right)
+            }
 
-    # Frame counter
-    frame_counter = 1
-
-    if regen:
-        while(True):
-            # reading from frame
-            ret_source, source_frame = source_video.read()
-            ret_target, target_frame = target_video.read()
-
-            if ret_source and ret_target and frame_counter < max_frames:
-                if rotate:
-                    source_frame = np.rot90(np.rot90(np.rot90(source_frame)))
-                    target_frame = np.rot90(np.rot90(np.rot90(target_frame)))
-
-                source_frame = cv2.resize(source_frame, (int(width), int(height)))
-                target_frame = cv2.resize(target_frame, (int(width), int(height)))
-
-                source_frames.append(source_frame)
-                target_frames.append(target_frame)
-
-                # Grab pose estimations for both video frames
-                source_candidate, source_subset = body_estimation(source_frame)
-                target_candidate, target_subset = body_estimation(target_frame)
-
-                if np.min(source_subset[:,19]) < 18 or np.min(target_subset[:,19]) < 18:
-                    print('Frame Dropped', frame_counter)
-                    frame_counter += 1
-                    continue
-
-                # Put pose estimations into memory
-                source_poses.append(source_candidate)
-                target_poses.append(target_candidate)
-
-                source_subsets.append(source_subset)
-                target_subsets.append(target_subset)
-
-                # Grab ankles
-                source_left.append(source_candidate[13, 1])
-                source_right.append(source_candidate[10, 1])
-                target_left.append(target_candidate[13, 1])
-                target_right.append(target_candidate[10, 1])
-
-                frame_counter += 1
-                print("Frame: ", frame_counter, flush=True)
-            else:
-                pickle.dump(source_poses, open("source_poses.pkl", "wb"))
-                pickle.dump(target_poses, open("target_poses.pkl", "wb"))
-                pickle.dump(source_subsets, open("source_subsets.pkl", "wb"))
-                pickle.dump(target_subsets, open("target_subsets.pkl", "wb"))
-                break
-
-        source_video.release()
-        target_video.release()
+            target_dict = {
+                "left": np.array(target_left),
+                "right": np.array(target_right)
+            }
 
 
-        source_dict = {
-        "left": np.array(source_left),
-        "right": np.array(source_right)
-        }
+            pose_normalizer = PoseNormalizer(source_dict, target_dict,
+                                             epsilon=5)
+            transformed_all = pose_normalizer.transform_pose_global(
+                source_poses, target_poses
+            )
 
-        target_dict = {
-        "left": np.array(target_left),
-        "right": np.array(target_right)
-        }
+            np.save("normed_source_pose.npy", np.array(transformed_all))
+            ret['transformed_all'] = transformed_all
+        else:
+            transformed_all = np.load("normed_source_pose.npy")
+            ret['transformed_all'] = transformed_all
 
-        pose_normalizer = PoseNormalizer(source_dict, target_dict, epsilon=5)
-        transformed_all = pose_normalizer.transform_pose_global(source_poses, target_poses)
-        np.save("normed_source_pose.npy", np.array(transformed_all))
-
-    else:
-        source_poses = pickle.load(open("source_poses.pkl", "rb"))
-        target_poses = pickle.load(open("target_poses.pkl", "rb"))
-        source_subsets = pickle.load(open("source_subsets.pkl", "rb"))
-        target_subsets = pickle.load(open("target_subsets.pkl", "rb"))
-        transformed_all = np.load("normed_source_pose.npy")
-
-    data = {
-        "normed_source": transformed_all,
-        "source_pose": source_poses,
-        "source_sub": source_subsets,
-        "target_pose": target_poses,
-        "target_sub": target_subsets,
-        "source_frame": source_frames,
-        "target_frame": target_frames
-    }
-
-    return data
+    return ret
