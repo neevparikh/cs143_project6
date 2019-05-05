@@ -96,8 +96,14 @@ class PoseNormalizer:
         return np.median(ankle_array, overwrite_input=False)
 
     def _get_min_ankle_position(self, ankle_array, med, mx):
-        cluster = np.array([p for p in ankle_array if (p < med) and (np.abs(np.abs(p - med) - np.abs(mx - med)) < self.epsilon)])
-        return np.max(cluster)
+        try:
+            cluster = np.array([p for p in ankle_array if (p < med) and (np.abs(np.abs(p - med) - np.abs(mx - med)) < self.epsilon)])
+            mn = np.max(cluster)
+        except Exception as e:
+            print(e)
+            print("Warning: Minimum as defined failed, reverting to np.min")
+            mn = np.min(ankle_array)
+        return mn 
 
     def _get_close_far_position(self, ankle_array, mx, mn):
         cluster_far = np.array([p for p in ankle_array if (np.abs(p - mn) < self.epsilon)])
@@ -258,7 +264,9 @@ def draw_bodypose(canvas, pose, subset):
               [8, 8, 8], [8, 8, 8], [9, 9, 9], [10, 10, 10], [11, 11, 11], [12, 12, 12], [13, 13, 13], \
               [14, 14, 14], [15, 15, 15], [16, 16, 16], [17, 17, 17]]
 
-    for i in range(17):
+    num_pose_points = 17
+
+    for i in range(num_pose_points):
         for n in range(len(subset)):
             index = subset[n][np.array(limbSeq[i]) - 1]
             if -1 in index:
@@ -407,7 +415,7 @@ def get_pose_normed_estimate(source, target, regen=True, rotate=True,
                 target_right.append(target_candidate[10, 1])
 
                 frame_counter += 1
-                print("Frame: ", frame_counter)
+                print("Frame: ", frame_counter, flush=True)
             else:
                 pickle.dump(source_poses, open("source_poses.pkl", "wb"))
                 pickle.dump(target_poses, open("target_poses.pkl", "wb"))
