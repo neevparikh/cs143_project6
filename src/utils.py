@@ -17,7 +17,8 @@ sys.path.append(os.getcwd() + '/src/pix2pixHD/')
 sys.path.append(os.getcwd() + '/src/pytorch-openpose/')
 
 def get_body():
-    return body.Body(os.getcwd() + '/src/pytorch-openpose/model/body_pose_model.pth')
+    return body.Body(os.getcwd() + \
+                     '/src/pytorch-openpose/model/body_pose_model.pth')
 
 
 class PoseNormalizer:
@@ -25,9 +26,12 @@ class PoseNormalizer:
 
     def __init__(self, source, target, epsilon=0.7, inclusion_threshold=20):
         """
-            source :: dict<ndarray> :: dict of source left ankle array and source right ankle array
-            target :: dict<ndarray> :: dict of target left ankle array and target right ankle array
-            epsilon :: float [0, 1] :: value for the clustering in calculating the min, paper suggests 0.7
+        source :: dict<ndarray> :: dict of source left ankle array and
+                                   source right ankle array
+        target :: dict<ndarray> :: dict of target left ankle array and
+                                   target right ankle array
+        epsilon :: float [0, 1] :: value for the clustering in calculating
+                                   the min, paper suggests 0.7
         """
 
         self.inclusion_threshold = inclusion_threshold
@@ -50,7 +54,8 @@ class PoseNormalizer:
         right_grounded = []
 
         for i in range(num_frames):
-            if np.abs(left_ankle_array[i] - right_ankle_array[i]) < self.inclusion_threshold:
+            if np.abs(left_ankle_array[i] - right_ankle_array[i]) < \
+                    self.inclusion_threshold:
                 left_grounded.append(left_ankle_array[i])
                 right_grounded.append(right_ankle_array[i])
             else:
@@ -59,9 +64,11 @@ class PoseNormalizer:
         return np.array(left_grounded), np.array(right_grounded)
 
     def _compute_translation(self, source, target):
-        """ b = t_min + (avg_frame_pos_source - s_min) / (s_max - s_min) * (t_max - t_min) - f_source """
+        """ b = t_min + (avg_frame_pos_source - s_min) / (s_max - s_min) *
+                (t_max - t_min) - f_source """
 
-        # NOTE: f_source assumed to be avg_target as we don't know what it is yet
+        # NOTE: f_source assumed to be avg_target as we don't know what it is
+        # yet
         avg_source = (source["left"] + source["right"]) / 2
         avg_target = (target["left"] + target["right"]) / 2
         t_min = self.statistics["target"]["min"]
@@ -70,10 +77,12 @@ class PoseNormalizer:
         s_max = self.statistics["source"]["max"]
 
         # self.statistics["target"]["total_avg"]
-        return t_min + ((avg_source - s_min) / (s_max - s_min)) * (t_max - t_min) - avg_target
+        return t_min + ((avg_source - s_min) / (s_max - s_min)) * \
+               (t_max - t_min) - avg_target
 
     def _compute_scale(self, source):
-        """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) * (t_close / s_close - t_far / s_far) """
+        """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) *
+                (t_close / s_close - t_far / s_far) """
 
         avg_source = (source["left"] + source["right"]) / 2
         t_far = self.statistics["target"]["far"]
@@ -83,7 +92,8 @@ class PoseNormalizer:
         s_min = self.statistics["source"]["min"]
         s_max = self.statistics["source"]["max"]
 
-        return (t_far / s_far) + (avg_source - s_min) / (s_max - s_min) * ((t_close / s_close) - (t_far / s_far))
+        return (t_far / s_far) + (avg_source - s_min) / (s_max - s_min) * \
+            ((t_close / s_close) - (t_far / s_far))
 
     def _compute_statistics(self, ankle_array, ankle_name):
         med = self._get_median_ankle_position(ankle_array)
@@ -96,7 +106,8 @@ class PoseNormalizer:
         }
         mn = self._get_min_ankle_position(ankle_array, med, mx)
         self.statistics[ankle_name]["min"] = mn
-        self.statistics[ankle_name]["close"], self.statistics[ankle_name]["far"] = self._get_close_far_position(
+        self.statistics[ankle_name]["close"], \
+            self.statistics[ankle_name]["far"] = self._get_close_far_position(
             ankle_array, mx, mn)
 
     def _get_median_ankle_position(self, ankle_array):
@@ -115,9 +126,9 @@ class PoseNormalizer:
 
     def _get_close_far_position(self, ankle_array, mx, mn):
         cluster_far = np.array(
-            [p for p in ankle_array if (np.abs(p - mn) < self.epsilon)])
+            [p for p in ankle_array if np.abs(p - mn) < self.epsilon])
         cluster_close = np.array(
-            [p for p in ankle_array if (np.abs(p - mx) < self.epsilon)])
+            [p for p in ankle_array if np.abs(p - mx) < self.epsilon])
         return np.max(cluster_close), np.max(cluster_far)
 
     def _get_max_ankle_position(self, ankle_array):
@@ -125,10 +136,12 @@ class PoseNormalizer:
 
     def transform_pose(self, source, target):
         """
-            source :: ndarray :: numpy array of all the pose estimates as returned by pose estimation of source video
-            target :: ndarray :: numpy array of all the pose estimates as returned by pose estimation of target video
+        source :: ndarray :: numpy array of all the pose estimates as
+                             returned by pose estimation of source video
+        target :: ndarray :: numpy array of all the pose estimates as
+                             returned by pose estimation of target video
 
-            Returns :: normalized target in the same format
+        Returns :: normalized target in the same format
         """
 
         source_ankles = {"left": source[13, 1], "right": source[10, 1]}
@@ -143,15 +156,22 @@ class PoseNormalizer:
 
     def transform_pose_global(self, source_all, target_all):
         """
-            source :: list<ndarray> :: numpy array of all the pose estimates for all the frames of the source
-            target :: list<ndarray> :: numpy array of all the pose estimates for all the frames of the target
+        source :: list<ndarray> :: numpy array of all the pose estimates
+                                   for all the frames of the source
+        target :: list<ndarray> :: numpy array of all the pose estimates
+                                   for all the frames of the target
 
-            Returns :: globally normalized in the same format
+        Returns :: globally normalized in the same format
         """
+
         source_ankles = {
-            "left": self.statistics["source"]["total_avg"], "right": self.statistics["source"]["total_avg"]}
+            "left": self.statistics["source"]["total_avg"],
+            "right": self.statistics["source"]["total_avg"]
+        }
         target_ankles = {
-            "left": self.statistics["target"]["total_avg"], "right": self.statistics["target"]["total_avg"]}
+            "left": self.statistics["target"]["total_avg"],
+            "right": self.statistics["target"]["total_avg"]
+        }
         b = self._compute_translation(source_ankles, target_ankles)
         s = self._compute_scale(source_ankles)
         for i in range(len(source_all)):

@@ -1,9 +1,7 @@
 import argparse
 
-import cv2
-
 from generate_data import add_base_args, make_get_path, save_pose
-from utils import get_pose_normed_estimate, loop_frame
+from utils import get_pose_normed_estimate
 
 
 def main():
@@ -40,9 +38,10 @@ def main():
 
     for pose, subsets, index in zip(transformed_all, source_subsets,
                                     source_indexes):
-        save_pose(pose, subsets, test_path_label(index))
+        save_pose(pose, subsets, test_path_label(
+            index), args.height, args.width)
 
-        print('test written', i, flush=True)
+        print('test written', index, flush=True)
 
 
 if __name__ == "__main__":
