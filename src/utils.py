@@ -16,8 +16,9 @@ sys.path.append(os.getcwd() + '/src/')
 sys.path.append(os.getcwd() + '/src/pix2pixHD/')
 sys.path.append(os.getcwd() + '/src/pytorch-openpose/')
 
+
 def get_body():
-    return body.Body(os.getcwd() + \
+    return body.Body(os.getcwd() +
                      '/src/pytorch-openpose/model/body_pose_model.pth')
 
 
@@ -78,7 +79,7 @@ class PoseNormalizer:
 
         # self.statistics["target"]["total_avg"]
         return t_min + ((avg_source - s_min) / (s_max - s_min)) * \
-               (t_max - t_min) - avg_target
+            (t_max - t_min) - avg_target
 
     def _compute_scale(self, source):
         """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) *
@@ -106,9 +107,10 @@ class PoseNormalizer:
         }
         mn = self._get_min_ankle_position(ankle_array, med, mx)
         self.statistics[ankle_name]["min"] = mn
-        self.statistics[ankle_name]["close"], \
-            self.statistics[ankle_name]["far"] = self._get_close_far_position(
-            ankle_array, mx, mn)
+
+        close_far = self._get_close_far_position(ankle_array, mx, mn)
+        self.statistics[ankle_name]["close"] = close_far[0]
+        self.statistics[ankle_name]["far"] = close_far[1]
 
     def _get_median_ankle_position(self, ankle_array):
         return np.median(ankle_array, overwrite_input=False)
@@ -189,8 +191,6 @@ def start_run(config_ctr):
     config_obj.opt.path = os.path.join("log_dir", "name")
     config = config_obj.opt
 
-    device = torch.device("cuda")
-
     # tensorboard (TODO)
     # writer = SummaryWriter(log_dir=os.path.join(config.path, "tb"))
     # writer.add_text('config', config.as_markdown(), 0)
@@ -238,7 +238,8 @@ class CustomSchedule:
         self.iter += 1
         if self.iter > self.num_iters:
             self.iter = self.num_iters
-        for val, slope, total in zip(self.values[::-1], self.slopes[::-1], self.totals[::-1]):
+        for val, slope, total in zip(self.values[::-1], self.slopes[::-1],
+                                     self.totals[::-1]):
             if self.iter > total:
                 return val + slope * (self.iter - total)
         raise ValueError
@@ -246,7 +247,8 @@ class CustomSchedule:
 
 def get_logger(file_path):
     """ Make python logger """
-    # [!] Since tensorboardX use default logger (e.g. logging.info()), we should use custom logger
+    # [!] Since tensorboardX use default logger (e.g. logging.info()),
+    # we should use custom logger
     logger = logging.getLogger('darts')
     log_format = '%(asctime)s | %(message)s'
     formatter = logging.Formatter(log_format, datefmt='%m/%d %I:%M:%S %p')
