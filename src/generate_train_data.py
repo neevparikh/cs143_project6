@@ -1,7 +1,10 @@
-from utils import get_pose_normed_estimate, loop_frame
-from generate_data import add_base_args, make_get_path, save_pose
-import cv2
 import argparse
+
+import cv2
+
+from generate_data import add_base_args, make_get_path, save_pose
+from utils import get_pose_normed_estimate, loop_frame
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -15,7 +18,6 @@ def main():
                                     rotate=args.rotated,
                                     max_frames=args.max_frames,
                                     height=args.height, width=args.width)
-
 
     target_poses = data["target_poses"]
     target_subsets = data["target_subsets"]
@@ -41,6 +43,7 @@ def main():
             target_counter_index += 1
 
     loop_frame(args.target, args.max_frames, loop_target)
+
 
 if __name__ == "__main__":
     main()

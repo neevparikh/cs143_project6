@@ -1,22 +1,24 @@
-import numpy as np
+import logging
 import math
+import os
+import pickle
+import sys
+
 import cv2
+import numpy as np
 import torch
 import torch.nn as nn
 from tensorboardX import SummaryWriter
-import logging
-import sys
-import os
-import pickle
+
+from python import body
 
 sys.path.append(os.getcwd() + '/src/')
 sys.path.append(os.getcwd() + '/src/pix2pixHD/')
 sys.path.append(os.getcwd() + '/src/pytorch-openpose/')
 
-from python import body
-
 def get_body():
     return body.Body(os.getcwd() + '/src/pytorch-openpose/model/body_pose_model.pth')
+
 
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
@@ -29,13 +31,16 @@ class PoseNormalizer:
         """
 
         self.inclusion_threshold = inclusion_threshold
-        self.s_left, self.s_right = self._include_ground_only(source["left"], source["right"])
-        self.t_left, self.t_right = self._include_ground_only(target["left"], target["right"])
+        self.s_left, self.s_right = self._include_ground_only(
+            source["left"], source["right"])
+        self.t_left, self.t_right = self._include_ground_only(
+            target["left"], target["right"])
         self.epsilon = epsilon
         self.statistics = {}
-        self._compute_statistics(np.append(self.s_left, self.s_right), "source")
-        self._compute_statistics(np.append(self.t_left, self.t_right), "target")
-
+        self._compute_statistics(
+            np.append(self.s_left, self.s_right), "source")
+        self._compute_statistics(
+            np.append(self.t_left, self.t_right), "target")
 
     def _include_ground_only(self, left_ankle_array, right_ankle_array):
         """ remove the frames where the leg is raised """
@@ -64,7 +69,8 @@ class PoseNormalizer:
         s_min = self.statistics["source"]["min"]
         s_max = self.statistics["source"]["max"]
 
-        return t_min + ((avg_source - s_min) / (s_max - s_min)) * (t_max - t_min) - avg_target # self.statistics["target"]["total_avg"]
+        # self.statistics["target"]["total_avg"]
+        return t_min + ((avg_source - s_min) / (s_max - s_min)) * (t_max - t_min) - avg_target
 
     def _compute_scale(self, source):
         """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) * (t_close / s_close - t_far / s_far) """
@@ -90,14 +96,16 @@ class PoseNormalizer:
         }
         mn = self._get_min_ankle_position(ankle_array, med, mx)
         self.statistics[ankle_name]["min"] = mn
-        self.statistics[ankle_name]["close"], self.statistics[ankle_name]["far"] = self._get_close_far_position(ankle_array, mx, mn)
+        self.statistics[ankle_name]["close"], self.statistics[ankle_name]["far"] = self._get_close_far_position(
+            ankle_array, mx, mn)
 
     def _get_median_ankle_position(self, ankle_array):
         return np.median(ankle_array, overwrite_input=False)
 
     def _get_min_ankle_position(self, ankle_array, med, mx):
         try:
-            cluster = np.array([p for p in ankle_array if (p < med) and (np.abs(np.abs(p - med) - np.abs(mx - med)) < self.epsilon)])
+            cluster = np.array([p for p in ankle_array if (p < med) and (
+                np.abs(np.abs(p - med) - np.abs(mx - med)) < self.epsilon)])
             mn = np.max(cluster)
         except Exception as e:
             print(e)
@@ -106,8 +114,10 @@ class PoseNormalizer:
         return mn
 
     def _get_close_far_position(self, ankle_array, mx, mn):
-        cluster_far = np.array([p for p in ankle_array if (np.abs(p - mn) < self.epsilon)])
-        cluster_close = np.array([p for p in ankle_array if (np.abs(p - mx) < self.epsilon)])
+        cluster_far = np.array(
+            [p for p in ankle_array if (np.abs(p - mn) < self.epsilon)])
+        cluster_close = np.array(
+            [p for p in ankle_array if (np.abs(p - mx) < self.epsilon)])
         return np.max(cluster_close), np.max(cluster_far)
 
     def _get_max_ankle_position(self, ankle_array):
@@ -138,8 +148,10 @@ class PoseNormalizer:
 
             Returns :: globally normalized in the same format
         """
-        source_ankles = {"left": self.statistics["source"]["total_avg"], "right": self.statistics["source"]["total_avg"]}
-        target_ankles = {"left": self.statistics["target"]["total_avg"], "right": self.statistics["target"]["total_avg"]}
+        source_ankles = {
+            "left": self.statistics["source"]["total_avg"], "right": self.statistics["source"]["total_avg"]}
+        target_ankles = {
+            "left": self.statistics["target"]["total_avg"], "right": self.statistics["target"]["total_avg"]}
         b = self._compute_translation(source_ankles, target_ankles)
         s = self._compute_scale(source_ankles)
         for i in range(len(source_all)):
@@ -149,6 +161,7 @@ class PoseNormalizer:
             p[:, 0:2] = p.astype("int")[:, 0:2]
             source_all[i] = p
         return source_all
+
 
 def start_run(config_ctr):
     config_obj = config_ctr()
@@ -177,6 +190,7 @@ def start_run(config_ctr):
 
     # return config_obj, writer, logger
     return config_obj, None, logger
+
 
 class CustomSchedule:
     def __init__(self, num_iters, param_values, intervals):
@@ -209,6 +223,7 @@ class CustomSchedule:
                 return val + slope * (self.iter - total)
         raise ValueError
 
+
 def get_logger(file_path):
     """ Make python logger """
     # [!] Since tensorboardX use default logger (e.g. logging.info()), we should use custom logger
@@ -226,8 +241,10 @@ def get_logger(file_path):
 
     return logger
 
+
 class AverageMeter():
     """ Computes and stores the average and current value """
+
     def __init__(self):
         self.reset()
 
@@ -244,6 +261,7 @@ class AverageMeter():
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+
 
 def draw_bodypose(canvas, pose, subset):
     """
@@ -283,6 +301,7 @@ def draw_bodypose(canvas, pose, subset):
 
     return canvas
 
+
 def loop_frame(video_path, max_frames, func):
     video = cv2.VideoCapture(video_path)
     frame = None
@@ -299,6 +318,7 @@ def loop_frame(video_path, max_frames, func):
 
     video.release()
 
+
 def transform_frame(frame, rotate, width, height):
     if rotate:
         frame = np.rot90(np.rot90(np.rot90(frame)))
@@ -306,6 +326,7 @@ def transform_frame(frame, rotate, width, height):
     frame = cv2.resize(frame, (int(width), int(height)))
 
     return frame
+
 
 def get_pose_normed_estimate(source, target, regen_source, regen_target,
                              regen_norm, rotate, height, width,
@@ -344,7 +365,7 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
             frame = transform_frame(frame, rotate, width, height)
             candidate, subset = body_estimation(frame)
 
-            if np.min(subset[:,19]) < 18:
+            if np.min(subset[:, 19]) < 18:
                 print(name, 'frame dropped', counter, flush=True)
             else:
                 indexes.append(counter)
