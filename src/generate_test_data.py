@@ -22,9 +22,9 @@ def main():
                                     regen_source=args.regen_source,
                                     regen_target=args.regen_target,
                                     regen_norm=args.regen_norm,
-                                    rotate=args.rotated,
-                                    max_frames=args.max_frames,
-                                    height=args.height, width=args.width)
+                                    rotated=args.rotated,
+                                    height=args.height, width=args.width,
+                                    max_frames=args.max_frames)
 
     source_subsets = data["source_subsets"]
     source_indexes = data["source_indexes"]
