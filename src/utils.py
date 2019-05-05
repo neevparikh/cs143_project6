@@ -307,20 +307,6 @@ def transform_frame(frame, rotate, width, height):
 
     return frame
 
-def get_train_pose_estimate(target, regen=True, rotate=True, height=512,
-                            width=256, max_frames=float('inf')):
-
-    return get_pose_normed_estimate(None, target, regen, None, None, rotate,
-                                    height, width, max_frames)
-
-def get_test_pose_estimate(source, target, regen_source=True, regen_target=True,
-                           regen_norm=True, rotate=True, height=512,
-                            width=256, max_frames=float('inf')):
-
-    return get_pose_normed_estimate(source, target, regen_source, regen_target,
-                                    regen_norm, rotate, height, width,
-                                    max_frames)
-
 def get_pose_normed_estimate(source, target, regen_source, regen_target,
                              regen_norm, rotate, height, width,
                              max_frames):
