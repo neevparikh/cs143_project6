@@ -14,6 +14,13 @@ sys.path.append(os.getcwd() + '/src/')
 sys.path.append(os.getcwd() + '/src/pix2pixHD/')
 sys.path.append(os.getcwd() + '/src/pytorch-openpose/')
 
+os.makedirs('data/train_label', exist_ok=True)
+os.makedirs('data/train_img', exist_ok=True)
+
+os.makedirs('data/test_label', exist_ok=True)
+os.makedirs('data/test_img', exist_ok=True)
+os.makedirs('data/test_inst', exist_ok=True)
+
 from python import body
 
 def get_body():
