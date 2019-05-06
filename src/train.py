@@ -4,7 +4,6 @@ import torch.nn as nn
 from torch.autograd import Variable
 from collections import OrderedDict
 
-from apex import amp
 import utils
 from options.train_options import TrainOptions
 import util.util as util
@@ -29,6 +28,7 @@ def train(config, writer, logger):
     model.named_buffers = lambda: []
 
     if config.fp16:
+        from apex import amp
         model, [optimizer_G, optimizer_D] = \
             amp.initialize(model, [model.optimizer_G, model.optimizer_D],
                            opt_level='O1')
@@ -42,6 +42,9 @@ def train(config, writer, logger):
         for data in data_set:
             save_gen = (step + 1) % config.display_freq == 0
             # save_gen = True
+
+            data['label'] = data['label'][:,:1]
+            assert data['label'].shape[1] == 1
 
             losses, generated = model(Variable(data['label']),
                                       Variable(data['inst']),
@@ -81,10 +84,17 @@ def train(config, writer, logger):
             model.module.optimizer_D.step()
 
             if (step + 1) % config.print_freq == 0 or step == total_steps - 1:
-                logger.info("Train: [{:2d}/{}] Step {:03d}/{:03d}".format(
-                    epoch + 1, config.epochs, step, len(data_set) - 1))
-                logger.info("Loss D: {},  Loss G {}, Loss VGG {}".format(
-                    loss_D.item(), loss_dict['G_GAN'].item(), loss_dict['G_VGG'].item()))
+                logger.info(
+                    "Train: [{:2d}/{}] Step {:03d}/{:03d}".format(
+                        epoch + 1, config.epochs, step, len(data_set) - 1
+                    )
+                )
+                logger.info(
+                    "Loss D: {},  Loss G {}, Loss VGG {}".format(
+                        loss_D.item(), loss_dict['G_GAN'].item(),
+                        loss_dict['G_VGG'].item()
+                    )
+                )
 
             if save_gen:
                 visuals = OrderedDict([('input_label',
@@ -98,7 +108,8 @@ def train(config, writer, logger):
                 visualizer.display_current_results(visuals, epoch, total_steps)
 
 
-            if (step + 1) % config.save_latest_freq == 0 or step == total_steps - 1:
+            if (step + 1) % config.save_latest_freq == 0 or \
+                    step == total_steps - 1:
                 model.module.save('latest')
                 model.module.save(epoch)
 
