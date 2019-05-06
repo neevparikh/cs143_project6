@@ -1,4 +1,3 @@
-from python import body
 import logging
 import math
 import os
@@ -9,6 +8,7 @@ sys.path.append(os.getcwd() + '/src/')
 sys.path.append(os.getcwd() + '/src/pix2pixHD/')
 sys.path.append(os.getcwd() + '/src/pytorch-openpose/')
 
+from python import body
 import cv2
 import numpy as np
 import torch
