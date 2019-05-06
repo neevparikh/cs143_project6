@@ -5,15 +5,15 @@ import os
 import pickle
 import sys
 
+sys.path.append(os.getcwd() + '/src/')
+sys.path.append(os.getcwd() + '/src/pix2pixHD/')
+sys.path.append(os.getcwd() + '/src/pytorch-openpose/')
+
 import cv2
 import numpy as np
 import torch
 import torch.nn as nn
 from tensorboardX import SummaryWriter
-
-sys.path.append(os.getcwd() + '/src/')
-sys.path.append(os.getcwd() + '/src/pix2pixHD/')
-sys.path.append(os.getcwd() + '/src/pytorch-openpose/')
 
 os.makedirs('pose_data/', exist_ok=True)
 os.makedirs('data/train_label', exist_ok=True)
