@@ -1,15 +1,16 @@
+from collections import OrderedDict
+
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from collections import OrderedDict
 
 import utils
-from options.train_options import TrainOptions
 import util.util as util
 from data.data_loader import CreateDataLoader
-from util.visualizer import Visualizer
 from models.models import create_model
+from options.train_options import TrainOptions
+from util.visualizer import Visualizer
 
 #TODO:
 # - Logging?
@@ -40,13 +41,15 @@ def train(config, writer, logger):
     for epoch in range(config.epochs):
         print("epoch: ", epoch)
         for i, data in enumerate(data_set):
-            # save_gen = (step + 1) % config.display_freq == 0
-            save_gen = True
+            save_gen = (step + 1) % config.display_freq == 0
 
             if step == 0:
-                generated = torch.zeros_like(data['image'])
-                prev_label = torch.zeros_like(data['label'])
-                prev_real = torch.zeros_like(data['image'])
+                if config.no_temporal_smoothing:
+                    generated = prev_label = prev_real = None
+                else:
+                    generated = torch.zeros_like(data['image'])
+                    prev_label = torch.zeros_like(data['label'])
+                    prev_real = torch.zeros_like(data['image'])
 
             data['label'] = data['label'][:, :1]
             assert data['label'].shape[1] == 1
@@ -115,6 +118,13 @@ def train(config, writer, logger):
                                            generated.data[0])),
                                        ('real_image',
                                         util.tensor2im(data['image'][0]))])
+
+                if not config.no_temporal_smoothing:
+                    visuals['prev_label'] = util.tensor2label(prev_label[0],
+                                                              config.label_nc)
+                    visuals['prev_real'] = util.tensor2im(prev_real[0])
+                    visuals['prev_generated'] = util.tensor2im(
+                        generated.data[0])
 
                 visualizer.display_current_results(visuals, epoch, total_steps)
 
