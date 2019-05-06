@@ -14,6 +14,7 @@ sys.path.append(os.getcwd() + '/src/')
 sys.path.append(os.getcwd() + '/src/pix2pixHD/')
 sys.path.append(os.getcwd() + '/src/pytorch-openpose/')
 
+os.makedirs('pose_data/', exist_ok=True)
 os.makedirs('data/train_label', exist_ok=True)
 os.makedirs('data/train_img', exist_ok=True)
 
@@ -360,6 +361,7 @@ def transform_frame(frame, rotated, width, height):
 def get_pose_normed_estimate(source, target, regen_source, regen_target,
                              regen_norm, rotated, height, width,
                              max_frames):
+    save_dir = "pose_data/"
     if source is not None:
         assert os.path.isfile(source)
 
@@ -413,16 +415,19 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
                                       source_right, source_indexes, 'source'),
                        rotated, width, height)
 
-            np.save("source_poses.npy", source_poses)
-            np.save("source_subsets.npy", source_subsets)
-            np.save("source_indexes.npy", source_indexes)
+            np.save(os.path.join(save_dir, "source_poses.npy"), source_poses)
+            np.save(os.path.join(save_dir, "source_subsets.npy"), source_subsets)
+            np.save(os.path.join(save_dir, "source_indexes.npy"), source_indexes)
             ret['source_poses'] = source_poses
             ret['source_subsets'] = source_subsets
             ret['source_indexes'] = source_indexes
         else:
-            source_poses = np.load("source_poses.npy")
-            source_subsets = np.load("source_subsets.npy")
-            source_indexes = np.load("source_indexes.npy")
+            source_poses = np.load(os.path.join(
+                save_dir, "source_poses.npy"), allow_pickle=True)
+            source_subsets = np.load(os.path.join(
+                save_dir, "source_subsets.npy"), allow_pickle=True)
+            source_indexes = np.load(os.path.join(
+                save_dir, "source_indexes.npy"), allow_pickle=True)
             ret['source_poses'] = source_poses
             ret['source_subsets'] = source_subsets
             ret['source_indexes'] = source_indexes
@@ -434,16 +439,21 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
                                       target_right, target_indexes, 'target'),
                        rotated, width, height)
 
-            np.save("target_poses.npy", target_poses)
-            np.save("target_subsets.npy", target_subsets)
-            np.save("target_indexes.npy", target_indexes)
+            np.save(os.path.join(save_dir, "target_poses.npy"), target_poses)
+            np.save(os.path.join(save_dir, "target_subsets.npy"),
+                    target_subsets)
+            np.save(os.path.join(save_dir, "target_indexes.npy"),
+                    target_indexes)
             ret['target_poses'] = target_poses
             ret['target_subsets'] = target_subsets
             ret['target_indexes'] = target_indexes
         else:
-            target_poses = np.load("target_poses.npy")
-            target_subsets = np.load("target_subsets.npy")
-            target_indexes = np.load("target_indexes.npy")
+            target_poses = np.load(os.path.join(
+                save_dir, "target_poses.npy"), allow_pickle=True)
+            target_subsets = np.load(os.path.join(
+                save_dir, "target_subsets.npy"), allow_pickle=True)
+            target_indexes = np.load(os.path.join(
+                save_dir, "target_indexes.npy"), allow_pickle=True)
             ret['target_poses'] = target_poses
             ret['target_subsets'] = target_subsets
             ret['target_indexes'] = target_indexes
@@ -466,10 +476,12 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
                 source_poses, target_poses
             )
 
-            np.save("normed_source_pose.npy", np.array(transformed_all))
+            np.save(os.path.join(save_dir, "normed_source_pose.npy"),
+                    np.array(transformed_all))
             ret['transformed_all'] = transformed_all
         else:
-            transformed_all = np.load("normed_source_pose.npy")
+            transformed_all = np.load(os.path.join(
+                save_dir, "normed_source_pose.npy"), allow_pickle=True)
             ret['transformed_all'] = transformed_all
 
     return ret
