@@ -6,20 +6,37 @@ from models.models import create_model
 import os
 from torchvision.transforms import ToPILImage
 from cv2 import imwrite
+from tqdm import tqdm
+import util.util as util
+from collections import OrderedDict
+from util.visualizer import Visualizer
+from util import html
 
 def generate(config, writer, logger):
     config = config.opt
     data_set = CreateDataLoader(config).load_data()
     model = create_model(config)
+    visualizer = Visualizer(config)
 
-    for i, data in enumerate(data_set):
-        minibatch = 1
+    web_dir = os.path.join(config.results_dir, config.name, '%s_%s' %
+                           (config.phase, config.which_epoch))
+
+    webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' %
+                        (config.name, config.phase, config.which_epoch))
+
+    for data in tqdm(data_set):
+        data['label'] = data['label'][:,:1]
+        assert data['label'].shape[1] == 1
+
         generated = model.inference(data['label'], data['inst'])
-        generated_img = generated.detach().cpu().numpy()[0]
-        generated_img = np.moveaxis(generated_img, [0, 1, 2], [2, 1, 0])
-        # for i == 0:
-        #     print(np.max(generated_img))
-        imwrite(os.path.join("outputs", "output_{}.png".format(i)), generated_img)
+        visuals = OrderedDict([('input_label',
+                                util.tensor2label(data['label'][0],
+                                                   config.label_nc)),
+                               ('synthesized_image',
+                                util.tensor2im(generated.data[0]))])
+
+        img_path = data['path']
+        visualizer.save_images(webpage, visuals, img_path)
 
 if __name__ == '__main__':
     generate(*utils.start_run(TestOptions))
