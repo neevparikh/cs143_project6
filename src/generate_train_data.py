@@ -9,7 +9,8 @@ from utils import get_pose_normed_estimate, loop_frame
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help="path to target video")
-    parser.add_argument("--regen", choices=["true", "false"], default='true')
+    parser.add_argument("--regen", action='store_true', dest='regen')
+    parser.add_argument("--no-regen", action='store_false', dest='regen')
     add_base_args(parser)
 
     args = parser.parse_args()

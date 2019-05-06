@@ -8,12 +8,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("source", help="path to target video", default=None)
     parser.add_argument("target", help="path to target video", default=None)
-    parser.add_argument("--regen_source", choices=["true", "false"],
-                        default='true')
-    parser.add_argument("--regen_target", choices=["true", "false"],
-                        default='true')
-    parser.add_argument("--regen_norm", choices=["true", "false"],
-                        default='true')
+    parser.add_argument("--regen_source", action='store_true', dest='regen_source')
+    parser.add_argument("--regen_target", action='store_true', dest='regen_target')
+    parser.add_argument("--regen_norm", action='store_true', dest='regen_norm')
+    parser.add_argument("--no-regen_source", action='store_false', dest='regen_source')
+    parser.add_argument("--no-regen_target", action='store_false', dest='regen_target')
+    parser.add_argument("--no-regen_norm", action='store_false', dest='regen_norm')
+
     add_base_args(parser)
 
     args = parser.parse_args()
