@@ -32,7 +32,7 @@ def get_body():
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
 
-    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=20):
+    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=20, alpha = 1): 
         """
         source :: dict<ndarray> :: dict of source left ankle array and
                                    source right ankle array
@@ -48,6 +48,7 @@ class PoseNormalizer:
         self.t_left, self.t_right = self._include_ground_only(
             target["left"], target["right"])
         self.epsilon = epsilon
+        self.alpha = alpha
         self.statistics = {}
         self._compute_statistics(
             np.append(self.s_left, self.s_right), "source")
@@ -77,7 +78,6 @@ class PoseNormalizer:
 
         # NOTE: f_source assumed to be avg_target as we don't know what it is
         # yet
-        alpha = 1
 
         avg_source = (source["left"] + source["right"]) / 2
         avg_target = (target["left"] + target["right"]) / 2
@@ -88,7 +88,7 @@ class PoseNormalizer:
 
         # self.statistics["target"]["total_avg"]
         return t_min + ((avg_source - s_min) / (s_max - s_min)) * \
-            (t_max - t_min)  - (alpha * avg_target)
+            (t_max - t_min)  - (self.alpha * avg_target)
 
     def _compute_scale(self, source):
         """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) *
@@ -489,7 +489,7 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
             }
 
             pose_normalizer = PoseNormalizer(source_dict, target_dict,
-                                             epsilon=5)
+                                             epsilon=5, alpha=1.2)
             transformed_all = pose_normalizer.transform_pose_global(
                 source_poses, target_poses
             )
