@@ -17,8 +17,8 @@ def generate(config, writer, logger):
         generated = model.inference(data['label'], data['inst'])
         generated_img = generated.detach().cpu().numpy()[0]
         generated_img = np.moveaxis(generated_img, [0, 1, 2], [2, 1, 0])
-        for i == 0:
-            print(np.max(generated_img))
+        # for i == 0:
+        #     print(np.max(generated_img))
         imwrite(os.path.join("outputs", "output_{}.png".format(i)), generated_img)
 
 if __name__ == '__main__':
