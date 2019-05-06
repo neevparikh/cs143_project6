@@ -40,14 +40,28 @@ def train(config, writer, logger):
     for epoch in range(config.epochs):
         print("epoch: ", epoch)
         for data in data_set:
-            save_gen = (step + 1) % config.display_freq == 0
-            # save_gen = True
+            # save_gen = (step + 1) % config.display_freq == 0
+            save_gen = True
+
+            if step == 0:
+                generated = torch.zeros_like(data['label'])
+                prev_label = torch.zeros_like(data['label'])
+                prev_real = torch.zeros_like(data['image'])
+
+
 
             losses, generated = model(Variable(data['label']),
                                       Variable(data['inst']),
                                       Variable(data['image']),
                                       Variable(data['feat']),
+                                      prev_label,
+                                      generated,
+                                      prev_real,
                                       infer=save_gen)
+
+            prev_real = data['image'].detach()
+            prev_label = data['label'].detach()
+            
 
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
