@@ -10,12 +10,18 @@ import torch
 import torch.nn as nn
 from tensorboardX import SummaryWriter
 
-from python import body
-
 sys.path.append(os.getcwd() + '/src/')
 sys.path.append(os.getcwd() + '/src/pix2pixHD/')
 sys.path.append(os.getcwd() + '/src/pytorch-openpose/')
 
+os.makedirs('data/train_label', exist_ok=True)
+os.makedirs('data/train_img', exist_ok=True)
+
+os.makedirs('data/test_label', exist_ok=True)
+os.makedirs('data/test_img', exist_ok=True)
+os.makedirs('data/test_inst', exist_ok=True)
+
+from python import body
 
 def get_body():
     return body.Body(os.getcwd() +
@@ -324,25 +330,26 @@ def draw_bodypose(canvas, pose, subset):
     return canvas
 
 
-def loop_frame(video_path, max_frames, func):
+def loop_frame(video_path, max_frames, func, rotated, width, height):
     video = cv2.VideoCapture(video_path)
     frame = None
 
     def get_frame():
+        nonlocal frame
         ret, frame = video.read()
         return ret
 
     counter = 0
 
     while(counter < max_frames and get_frame()):
-        func(frame, counter)
+        func(transform_frame(frame, rotated, width, height), counter)
         counter += 1
 
     video.release()
 
 
-def transform_frame(frame, rotate, width, height):
-    if rotate:
+def transform_frame(frame, rotated, width, height):
+    if rotated:
         frame = np.rot90(np.rot90(np.rot90(frame)))
 
     frame = cv2.resize(frame, (int(width), int(height)))
@@ -351,7 +358,7 @@ def transform_frame(frame, rotate, width, height):
 
 
 def get_pose_normed_estimate(source, target, regen_source, regen_target,
-                             regen_norm, rotate, height, width,
+                             regen_norm, rotated, height, width,
                              max_frames):
     if source is not None:
         assert os.path.isfile(source)
@@ -384,7 +391,6 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
     def make_loop_func(poses, subsets, left, right, indexes, name):
         def loop_func(frame, counter, poses=poses, subsets=subsets,
                       left=left, right=right, indexes=indexes, name=name):
-            frame = transform_frame(frame, rotate, width, height)
             candidate, subset = body_estimation(frame)
 
             if np.min(subset[:, 19]) < 18:
@@ -404,7 +410,8 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
         if regen_source:
             loop_frame(source, max_frames,
                        make_loop_func(source_poses, source_subsets, source_left,
-                                      source_right, source_indexes, 'source'))
+                                      source_right, source_indexes, 'source'),
+                       rotated, width, height)
 
             np.save("source_poses.npy", source_poses)
             np.save("source_subsets.npy", source_subsets)
@@ -424,7 +431,8 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
         if regen_target:
             loop_frame(target, max_frames,
                        make_loop_func(target_poses, target_subsets, target_left,
-                                      target_right, target_indexes, 'target'))
+                                      target_right, target_indexes, 'target'),
+                       rotated, width, height)
 
             np.save("target_poses.npy", target_poses)
             np.save("target_subsets.npy", target_subsets)

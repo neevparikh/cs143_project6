@@ -14,10 +14,13 @@ def main():
 
     args = parser.parse_args()
 
-    data = get_pose_normed_estimate(None, args.target, regen_target=args.regen,
-                                    rotate=args.rotated,
-                                    max_frames=args.max_frames,
-                                    height=args.height, width=args.width)
+    data = get_pose_normed_estimate(None, args.target,
+                                    regen_source=None,
+                                    regen_target=args.regen,
+                                    regen_norm=None,
+                                    rotated=args.rotated,
+                                    height=args.height, width=args.width,
+                                    max_frames=args.max_frames)
 
     target_poses = data["target_poses"]
     target_subsets = data["target_subsets"]
@@ -31,18 +34,23 @@ def main():
     train_path_label = make_get_path(True, True)
     train_path_img = make_get_path(True, False)
 
-    def loop_target(frame, counter):
+    def loop_target(img, counter):
+        nonlocal target_counter_index
+
         if counter == target_indexes[target_counter_index]:
-            cv2.imwrite(train_path_img(counter), frame)
+            cv2.imwrite(train_path_img(target_counter_index), img)
 
-            save_pose(args.height, args.width, target_poses[counter],
-                      target_subsets[counter], train_path_label(counter))
+            save_pose(target_poses[target_counter_index],
+                      target_subsets[target_counter_index],
+                      train_path_label(target_counter_index),
+                      args.height, args.width)
 
-            print("train writing:", counter)
+            print("train writing:", target_counter_index)
 
             target_counter_index += 1
 
-    loop_frame(args.target, args.max_frames, loop_target)
+    loop_frame(args.target, args.max_frames, loop_target, args.rotated,
+               args.width, args.height)
 
 
 if __name__ == "__main__":

@@ -11,9 +11,9 @@ def main():
 
     args = parser.parse_args()
 
-    get_pose_normed_estimate(args.source, None, rotate=args.rotated,
-                             max_frames=args.max_frames, height=args.height,
-                             width=args.width)
+    get_pose_normed_estimate(args.source, None, True, True, True,
+                             rotated=args.rotated, height=args.height,
+                             width=args.width, max_frames=args.max_frames,)
 
 
 if __name__ == "__main__":
