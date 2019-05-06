@@ -19,7 +19,7 @@ def main():
                         action='store_false', dest='regen_target')
     parser.add_argument("--no-regen_norm",
                         action='store_false', dest='regen_norm')
-    parser.add_argument("--no_norm", action='store_false', dest='no_norm')
+    parser.add_argument("--no_norm", action='store_true', dest='no_norm')
 
     add_base_args(parser)
 
