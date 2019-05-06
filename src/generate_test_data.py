@@ -8,12 +8,18 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("source", help="path to target video", default=None)
     parser.add_argument("target", help="path to target video", default=None)
-    parser.add_argument("--regen_source", action='store_true', dest='regen_source')
-    parser.add_argument("--regen_target", action='store_true', dest='regen_target')
+    parser.add_argument(
+        "--regen_source", action='store_true', dest='regen_source')
+    parser.add_argument(
+        "--regen_target", action='store_true', dest='regen_target')
     parser.add_argument("--regen_norm", action='store_true', dest='regen_norm')
-    parser.add_argument("--no-regen_source", action='store_false', dest='regen_source')
-    parser.add_argument("--no-regen_target", action='store_false', dest='regen_target')
-    parser.add_argument("--no-regen_norm", action='store_false', dest='regen_norm')
+    parser.add_argument("--no-regen_source",
+                        action='store_false', dest='regen_source')
+    parser.add_argument("--no-regen_target",
+                        action='store_false', dest='regen_target')
+    parser.add_argument("--no-regen_norm",
+                        action='store_false', dest='regen_norm')
+    parser.add_argument("--no_norm", action='store_false', dest='no_norm')
 
     add_base_args(parser)
 
@@ -30,7 +36,10 @@ def main():
     source_subsets = data["source_subsets"]
     source_indexes = data["source_indexes"]
 
-    transformed_all = data['transformed_all']
+    if args.no_norm:
+        transformed_all = data['source_poses']
+    else:
+        transformed_all = data['transformed_all']
 
     assert len(source_indexes) == len(source_subsets)
     assert len(transformed_all) == len(source_subsets)
