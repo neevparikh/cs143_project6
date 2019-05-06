@@ -46,10 +46,12 @@ def generate(config, writer, logger):
             assert data['label'].shape[1] == 1
 
             if is_first:
-                prev_generated = torch.zeros_like(data['label'])
+                shape = data['label'].shape
+                prev_generated = torch.zeros(
+                    shape[0], 3, shape[2], shape[3]).cuda()
 
-            generated = model.inference(torch.cat((data['label'], prev_generated),
-                dim=1), data['inst'])
+            generated = model.inference(
+                data['label'], data['inst'], prev_generated)
 
             prev_generated = generated
             is_first = False
