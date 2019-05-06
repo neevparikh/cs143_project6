@@ -44,13 +44,11 @@ def train(config, writer, logger):
             save_gen = True
 
             if step == 0:
-                generated = torch.zeros_like(data['label'])
+                generated = torch.zeros_like(data['image'])
                 prev_label = torch.zeros_like(data['label'])
                 prev_real = torch.zeros_like(data['image'])
 
-
-
-            data['label'] = data['label'][:,:1]
+            data['label'] = data['label'][:, :1]
             assert data['label'].shape[1] == 1
 
             losses, generated = model(Variable(data['label']),
@@ -64,7 +62,6 @@ def train(config, writer, logger):
 
             prev_real = data['image'].detach()
             prev_label = data['label'].detach()
-            
 
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
@@ -121,7 +118,6 @@ def train(config, writer, logger):
 
                 visualizer.display_current_results(visuals, epoch, total_steps)
 
-
             if (step + 1) % config.save_latest_freq == 0 or \
                     step == total_steps - 1:
                 model.module.save('latest')
@@ -136,6 +132,7 @@ def train(config, writer, logger):
         ### linearly decay learning rate after certain iterations
         if epoch > config.niter:
             model.module.update_learning_rate()
+
 
 if __name__ == '__main__':
     train(*utils.start_run(TrainOptions))
