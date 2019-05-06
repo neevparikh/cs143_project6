@@ -37,8 +37,10 @@ def main():
     source_indexes = data["source_indexes"]
 
     if args.no_norm:
+        print("Not using norm")
         transformed_all = data['source_poses']
     else:
+        print("Using norm")
         transformed_all = data['transformed_all']
 
     assert len(source_indexes) == len(source_subsets)
