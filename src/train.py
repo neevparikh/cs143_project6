@@ -39,7 +39,7 @@ def train(config, writer, logger):
 
     for epoch in range(config.epochs):
         print("epoch: ", epoch)
-        for data in data_set:
+        for i, data in enumerate(data_set):
             save_gen = (step + 1) % config.display_freq == 0
             # save_gen = True
 
@@ -86,7 +86,7 @@ def train(config, writer, logger):
             if (step + 1) % config.print_freq == 0 or step == total_steps - 1:
                 logger.info(
                     "Train: [{:2d}/{}] Step {:03d}/{:03d}".format(
-                        epoch + 1, config.epochs, step, len(data_set) - 1
+                        epoch + 1, config.epochs, i, len(data_set) - 1
                     )
                 )
                 logger.info(
