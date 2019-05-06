@@ -77,6 +77,8 @@ class PoseNormalizer:
 
         # NOTE: f_source assumed to be avg_target as we don't know what it is
         # yet
+        alpha = 1
+
         avg_source = (source["left"] + source["right"]) / 2
         avg_target = (target["left"] + target["right"]) / 2
         t_min = self.statistics["target"]["min"]
@@ -86,7 +88,7 @@ class PoseNormalizer:
 
         # self.statistics["target"]["total_avg"]
         return t_min + ((avg_source - s_min) / (s_max - s_min)) * \
-            (t_max - t_min) # - avg_target
+            (t_max - t_min)  - (alpha * avg_target)
 
     def _compute_scale(self, source):
         """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) *
