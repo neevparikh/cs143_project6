@@ -4,6 +4,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 from collections import OrderedDict
 
+from apex import amp
 import utils
 from options.train_options import TrainOptions
 import util.util as util
@@ -25,6 +26,15 @@ def train(config, writer, logger):
     model = create_model(config)
     visualizer = Visualizer(config)
 
+    model.named_buffers = lambda: []
+
+    if config.fp16:
+        model, [optimizer_G, optimizer_D] = \
+            amp.initialize(model, [model.optimizer_G, model.optimizer_D],
+                           opt_level='O1')
+
+        model = torch.nn.DataParallel(model, device_ids=config.gpu_ids)
+
     step = 0
 
     for epoch in range(config.epochs):
@@ -42,6 +52,7 @@ def train(config, writer, logger):
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
                 x, int) else x for x in losses]
+
             loss_dict = dict(zip(model.module.loss_names, losses))
 
             # calculate final loss scalar
@@ -51,12 +62,22 @@ def train(config, writer, logger):
 
             # update generator weights\n",
             model.module.optimizer_G.zero_grad()
-            loss_G.backward()
+
+            if config.fp16:
+                with amp.scale_loss(loss_G, optimizer_G) as scaled_loss:
+                    scaled_loss.backward()
+            else:
+                loss_G.backward()
+
             model.module.optimizer_G.step()
 
             # update discriminator weights\n",
             model.module.optimizer_D.zero_grad()
-            loss_D.backward()
+            if config.fp16:
+                with amp.scale_loss(loss_D, optimizer_D) as scaled_loss:
+                    scaled_loss.backward()
+            else:
+                loss_D.backward()
             model.module.optimizer_D.step()
 
             if (step + 1) % config.print_freq == 0 or step == total_steps - 1:
