@@ -420,6 +420,8 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
             np.save(os.path.join(save_dir, "source_poses.npy"), source_poses)
             np.save(os.path.join(save_dir, "source_subsets.npy"), source_subsets)
             np.save(os.path.join(save_dir, "source_indexes.npy"), source_indexes)
+            np.save(os.path.join(save_dir, "source_left.npy"), source_left)
+            np.save(os.path.join(save_dir, "source_right.npy"), source_right)
             ret['source_poses'] = source_poses
             ret['source_subsets'] = source_subsets
             ret['source_indexes'] = source_indexes
@@ -431,6 +433,10 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
                 save_dir, "source_subsets.npy"), allow_pickle=True)
             source_indexes = np.load(os.path.join(
                 save_dir, "source_indexes.npy"), allow_pickle=True)
+            source_left = np.load(os.path.join(save_dir, "source_left.npy"),
+                    allow_pickle=True)
+            source_right = np.load(os.path.join(save_dir, "source_right.npy"),
+                    allow_pickle=True)
             ret['source_poses'] = source_poses
             ret['source_subsets'] = source_subsets
             ret['source_indexes'] = source_indexes
@@ -447,6 +453,8 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
                     target_subsets)
             np.save(os.path.join(save_dir, "target_indexes.npy"),
                     target_indexes)
+            np.save(os.path.join(save_dir, "target_left.npy"), target_left)
+            np.save(os.path.join(save_dir, "target_right.npy"), target_right)
             ret['target_poses'] = target_poses
             ret['target_subsets'] = target_subsets
             ret['target_indexes'] = target_indexes
@@ -458,6 +466,10 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
                 save_dir, "target_subsets.npy"), allow_pickle=True)
             target_indexes = np.load(os.path.join(
                 save_dir, "target_indexes.npy"), allow_pickle=True)
+            target_left = np.load(os.path.join(save_dir, "target_left.npy"),
+                    allow_pickle=True)
+            target_right = np.load(os.path.join(save_dir, "target_right.npy"),
+                    allow_pickle=True)
             ret['target_poses'] = target_poses
             ret['target_subsets'] = target_subsets
             ret['target_indexes'] = target_indexes
