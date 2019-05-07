@@ -12,6 +12,10 @@ from collections import OrderedDict
 from util.visualizer import Visualizer
 from util import html
 import torch
+from PIL import Image
+from torchvision.transforms import ToTensor
+
+toTensor = ToTensor()
 
 def generate(config, writer, logger):
     config = config.opt
@@ -47,8 +51,10 @@ def generate(config, writer, logger):
 
             if is_first:
                 shape = data['label'].shape
-                prev_generated = torch.zeros(
-                    shape[0], 3, shape[2], shape[3]).cuda()
+                start_img = Image.open(config.first_load_path)
+                prev_generated = (toTensor(start_img) * 2 - 1).cuda()
+                shape = prev_generated.shape
+                prev_generated = prev_generated.view(1, *shape)
 
             generated = model.inference(
                 data['label'], data['inst'], prev_generated)

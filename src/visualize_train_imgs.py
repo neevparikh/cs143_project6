@@ -3,21 +3,13 @@ import numpy as np
 from PIL import Image
 import os
 
+ldir = "results/medium_fewer_bugs/test_latest/images/"
+idir = "data/train_img/"
 
-ldir = os.getcwd() + "/data/test_label/"
-idir = os.getcwd() + "/data/train_img/"
-tidir = os.getcwd() + "/data/test_img/"
-
-for i in range(400, 401):
-    i = 400
-    path = ldir + "label_{}.png".format(i)
+for i in range(1000, 9100):
+    path = ldir + "label_{}_input_label.jpg".format(i)
     if os.path.exists(path):
-        lb_show = np.array(Image.open(ldir + "label_{}.png".format(i))) 
-        im_show = np.array(Image.open(idir + "img_{}.png".format(i)))
-        tim_show = np.array(Image.open(tidir + "img_{}.png".format(i)))
-        fig, axs = plt.subplots(1,3)
-        axs[0].imshow(lb_show * 10)
-        axs[1].imshow(im_show)
-        axs[2].imshow(tim_show)
-        plt.show()
-
+        lb_show = np.array(Image.open(ldir + "label_{}_synthesized_image.jpg".format(i)))
+        im_show = np.array(Image.open("/home/ryan/Pictures/train_demo/epoch003_synthesized_image.jpg"))
+        fig, axs = plt.subplots(1,2)
+        axs[0].imshow(lb_show)
