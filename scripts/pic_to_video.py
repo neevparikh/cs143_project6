@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("video_name", 
             help="name of output video with file extension")
     parser.add_argument("--pattern", help="regex pattern to use", default=None)
-    parser.add_argument("--multiplier", help="multiplier for boosting viusal",
+    parser.add_argument("--multiplier", type=int, help="multiplier for boosting viusal",
             default=1)
     parser.add_argument("--codec", help="codec to use", default="mp4v")
     parser.add_argument("--fps", type=int, help="frames per sec for output",
