@@ -15,7 +15,10 @@ import torch
 import torch.nn as nn
 from tensorboardX import SummaryWriter
 
-os.makedirs('pose_data/', exist_ok=True)
+
+save_dir = "pose_data/"
+
+os.makedirs(save_dir, exist_ok=True)
 os.makedirs('data/train_label', exist_ok=True)
 os.makedirs('data/train_img', exist_ok=True)
 
@@ -360,8 +363,6 @@ def transform_frame(frame, rotated, width, height):
     return frame
 
 
-save_dir = "pose_data/"
-
 
 def get_pose_normed_estimate(source, target, regen_source, regen_target,
                              regen_norm, rotated, height, width,
@@ -429,7 +430,7 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
             ret['source_subsets'] = source_subsets
             ret['source_indexes'] = source_indexes
         else:
-            print("Grabbing from npy files in pose_data")
+            print("Grabbing from npy files")
             source_poses = np.load(os.path.join(
                 save_dir, "source_poses.npy"), allow_pickle=True)
             source_subsets = np.load(os.path.join(
@@ -462,7 +463,7 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
             ret['target_subsets'] = target_subsets
             ret['target_indexes'] = target_indexes
         else:
-            print("Grabbing from npy files in pose_data")
+            print("Grabbing from npy files")
             target_poses = np.load(os.path.join(
                 save_dir, "target_poses.npy"), allow_pickle=True)
             target_subsets = np.load(os.path.join(

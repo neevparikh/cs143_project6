@@ -8,27 +8,19 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("source", help="path to target video", default=None)
     parser.add_argument("target", help="path to target video", default=None)
-    parser.add_argument(
-        "--regen_source", action='store_true', dest='regen_source')
-    parser.add_argument(
-        "--regen_target", action='store_true', dest='regen_target')
-    parser.add_argument("--regen_norm", action='store_true', dest='regen_norm')
-    parser.add_argument("--no-regen_source",
-                        action='store_false', dest='regen_source')
-    parser.add_argument("--no-regen_target",
-                        action='store_false', dest='regen_target')
-    parser.add_argument("--no-regen_norm",
-                        action='store_false', dest='regen_norm')
-    parser.add_argument("--no_norm", action='store_false', dest='no_norm')
+    parser.add_argument("--no_regen_source", action='store_true')
+    parser.add_argument("--no_regen_target", action='store_true')
+    parser.add_argument("--no_regen_norm", action='store_true')
+    parser.add_argument("--no_norm", action='store_true', dest='no_norm')
 
     add_base_args(parser)
 
     args = parser.parse_args()
 
     data = get_pose_normed_estimate(args.source, args.target,
-                                    regen_source=args.regen_source,
-                                    regen_target=args.regen_target,
-                                    regen_norm=args.regen_norm,
+                                    regen_source= not args.no_regen_source,
+                                    regen_target= not args.no_regen_target,
+                                    regen_norm= not args.no_regen_norm,
                                     rotated=args.rotated,
                                     height=args.height, width=args.width,
                                     max_frames=args.max_frames)
@@ -37,8 +29,10 @@ def main():
     source_indexes = data["source_indexes"]
 
     if args.no_norm:
+        print("Not using norm")
         transformed_all = data['source_poses']
     else:
+        print("Using norm")
         transformed_all = data['transformed_all']
 
     assert len(source_indexes) == len(source_subsets)

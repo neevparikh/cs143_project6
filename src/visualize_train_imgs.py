@@ -3,6 +3,8 @@ import numpy as np
 from PIL import Image
 import os
 
+ldir = "results/medium_fewer_bugs/test_latest/images/"
+idir = "data/train_img/"
 
 tldir = os.getcwd() + "/data/test_label/"
 ldir = os.getcwd() + "/data/train_label/"
