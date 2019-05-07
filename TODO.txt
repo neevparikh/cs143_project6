@@ -1,0 +1,17 @@
+Need:
+1. actually train all the way/try to rid of artifact.
+2. shutdown k80.
+  - copy all npys
+  - regen test labels
+  - check test labels are as expected using video script
+3. git sync.
+
+High:
+1. pose norm
+2. paper
+3. multiple videos (source)
+
+Enhancements/tests:
+1. bigger images (me)
+2. temporal???? (won't test)
+2. Face gan
