@@ -37,11 +37,11 @@ if __name__ == "__main__":
     height, width, layers = frame.shape
 
     video = cv2.VideoWriter(video_name,
-                            cv2.VideoWriter_fourcc('M', 'P', '4', '2'), 60,
+                            cv2.VideoWriter_fourcc(*"mp4v"), 60,
                             (width, height))
 
     for image in images:
-        video.write(cv2.imread(os.path.join(image_folder, image)))
+        video.write(cv2.imread(os.path.join(image_folder, image)) * 10)
 
-    cv2.destroyAllWindows()
     video.release()
+    cv2.destroyAllWindows()
