@@ -55,7 +55,7 @@ if __name__ == "__main__":
                             (width, height))
 
     for image in images:
-        video.write(cv2.imread(os.path.join(image_folder, image)) * 10)
+        video.write(cv2.imread(os.path.join(image_folder, image)))
 
     video.release()
     cv2.destroyAllWindows()
