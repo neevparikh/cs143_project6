@@ -10,7 +10,6 @@ vid_path = os.path.join('data/videos/neev.mp4')
 path = 'data/test_img/'
 source_indexes = np.load('pose_data/source_indexes.npy', allow_pickle=True)
 vid = cv2.VideoCapture(vid_path)
-counter = 0 
 
 while(True):
     ret, frame = vid.read()
