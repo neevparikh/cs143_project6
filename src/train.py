@@ -43,11 +43,11 @@ def train(config, writer, logger):
         for i, data in enumerate(data_set):
             save_gen = (step + 1) % config.display_freq == 0
 
-            if step == 0:
+            if i == 0:
                 if config.no_temporal_smoothing:
-                    generated = prev_label = prev_real = None
+                    prev_generated = prev_label = prev_real = None
                 else:
-                    generated = torch.zeros_like(data['image'])
+                    prev_generated = torch.zeros_like(data['image'])
                     prev_label = torch.zeros_like(data['label'])
                     prev_real = torch.zeros_like(data['image'])
 
@@ -59,7 +59,7 @@ def train(config, writer, logger):
                                       Variable(data['image']),
                                       Variable(data['feat']),
                                       prev_label,
-                                      generated,
+                                      prev_generated,
                                       prev_real,
                                       infer=save_gen)
 
@@ -124,7 +124,7 @@ def train(config, writer, logger):
                                                               config.label_nc)
                     visuals['prev_real'] = util.tensor2im(prev_real[0])
                     visuals['prev_generated'] = util.tensor2im(
-                        generated.data[0])
+                        prev_generated.data[0])
 
                 visualizer.display_current_results(visuals, epoch, total_steps)
 
@@ -133,6 +133,7 @@ def train(config, writer, logger):
                 model.module.save('latest')
                 model.module.save(epoch)
 
+            prev_generated = generated
             step += 1
 
         ### train the entire network after certain iterations

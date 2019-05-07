@@ -31,6 +31,11 @@ def generate(config, writer, logger):
 
     is_first = True
 
+    start_img = Image.open(config.first_load_path)
+    prev_generated = (toTensor(start_img) * 2 - 1).cuda()
+    shape = prev_generated.shape
+    prev_generated = prev_generated.view(1, *shape)
+
     for data in tqdm(data_set):
         if config.no_temporal_smoothing:
             data['label'] = data['label'][:,:1]
@@ -48,13 +53,6 @@ def generate(config, writer, logger):
         else:
             data['label'] = data['label'][:,:1]
             assert data['label'].shape[1] == 1
-
-            if is_first:
-                shape = data['label'].shape
-                start_img = Image.open(config.first_load_path)
-                prev_generated = (toTensor(start_img) * 2 - 1).cuda()
-                shape = prev_generated.shape
-                prev_generated = prev_generated.view(1, *shape)
 
             generated = model.inference(
                 data['label'], data['inst'], prev_generated)
