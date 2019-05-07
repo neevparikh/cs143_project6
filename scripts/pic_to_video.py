@@ -2,8 +2,9 @@
 
 import cv2
 import os
-import sys
+import argparse
 import re
+
 
 def atoi(text):
     return int(text) if text.isdigit() else text
@@ -17,13 +18,26 @@ def natural_keys(text):
     return [ atoi(c) for c in re.split(r'(\d+)', text) ]
 
 if __name__ == "__main__":
-    image_folder = sys.argv[1]
-    video_name = sys.argv[2]
-    pattern = None
+    parser = argparse.ArgumentParser()
+    parser.add_argument("image_folder", help="path to image folder")
+    parser.add_argument("video_name", 
+            help="name of output video with file extension")
+    parser.add_argument("--pattern", help="regex pattern to use", default=None)
+    parser.add_argument("--codec", help="codec to use", default="mp4v")
+    parser.add_argument("--fps", type=int, help="frames per sec for output",
+            default=60)
 
-    if len(sys.argv) > 3:
-        pattern = re.compile(sys.argv[3])
-        print("using pattern")
+    args = parser.parse_args()
+
+    image_folder = args.image_folder
+    video_name = args.video_name
+    pattern = args.pattern
+    fps = args.fps
+    codec = args.codec
+
+    if pattern: 
+        pattern = re.compile(pattern)
+        print("using pattern")  
 
     images = []
 
@@ -37,7 +51,7 @@ if __name__ == "__main__":
     height, width, layers = frame.shape
 
     video = cv2.VideoWriter(video_name,
-                            cv2.VideoWriter_fourcc(*"mp4v"), 60,
+                            cv2.VideoWriter_fourcc(*codec), fps,
                             (width, height))
 
     for image in images:
