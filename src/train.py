@@ -67,7 +67,8 @@ def train(config, writer, logger):
         for i, data in enumerate(data_set):
             save_gen = (step + 1) % config.display_freq == 0
 
-            if i == 0:
+            if i == 0 or (not config.no_temporal_smoothing and \
+                          np.random.random() < config.prob_previous_zero):
                 if config.no_temporal_smoothing:
                     prev_generated = prev_label = prev_real = None
                 else:
