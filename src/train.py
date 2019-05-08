@@ -78,17 +78,14 @@ def train(config, writer, logger):
             data['label'] = data['label'][:, :1]
             assert data['label'].shape[1] == 1
 
-            losses, generated = model(Variable(data['label']),
-                                      Variable(data['inst']),
-                                      Variable(data['image']),
-                                      Variable(data['feat']),
-                                      prev_label,
-                                      prev_generated,
-                                      prev_real,
+            losses, generated = model(Variable(data['label']).cuda(),
+                                      Variable(data['inst'].cuda()),
+                                      Variable(data['image'].cuda()),
+                                      Variable(data['feat'].cuda()),
+                                      prev_label.cuda(),
+                                      prev_generated.cuda(),
+                                      prev_real.cuda(),
                                       infer=save_gen)
-
-            prev_real = data['image'].detach()
-            prev_label = data['label'].detach()
 
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
@@ -159,6 +156,9 @@ def train(config, writer, logger):
                     model.module.save(epoch)
 
             prev_generated = generated
+            prev_real = data['image'].detach()
+            prev_label = data['label'].detach()
+
             step += 1
 
         ### train the entire network after certain iterations
