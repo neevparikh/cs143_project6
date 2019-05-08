@@ -26,6 +26,13 @@ def train(config, writer, logger):
     else:
         config.distributed = 0
 
+    if config.distributed:
+        config.gpu = config.local_rank
+        torch.cuda.set_device(config.gpu)
+        torch.distributed.init_process_group(backend='nccl',
+                                             init_method='env://')
+        config.world_size = torch.distributed.get_world_size()
+
     data_set = CreateDataLoader(config).load_data()
     total_steps = config.epochs * len(data_set)
     print(len(data_set), "# of Training Images")
@@ -39,13 +46,6 @@ def train(config, writer, logger):
 
     config.gpu = 0
     config.world_size = 1
-
-    if config.distributed:
-        config.gpu = config.local_rank
-        torch.cuda.set_device(config.gpu)
-        torch.distributed.init_process_group(backend='nccl',
-                                             init_method='env://')
-        config.world_size = torch.distributed.get_world_size()
 
     if config.fp16:
         from apex import amp
