@@ -362,8 +362,6 @@ def transform_frame(frame, rotated, width, height):
 
     return frame
 
-
-
 def get_pose_normed_estimate(source, target, regen_source, regen_target,
                              regen_norm, rotated, height, width,
                              max_frames):
@@ -496,8 +494,12 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
             }
 
             pose_normalizer = PoseNormalizer(source_dict, target_dict,
+<<<<<<< HEAD
                                              epsilon=5, alpha=1.2)
 
+=======
+                                             epsilon=5, alpha=1.1)
+>>>>>>> 28bc34cf620d4d41680f3fbc207e44bb6d80f0b9
             transformed_all = pose_normalizer.transform_pose_global(
                 source_poses, target_poses
             )
