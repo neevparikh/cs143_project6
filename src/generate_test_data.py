@@ -25,9 +25,9 @@ def main():
         no_regen_norm = True 
 
     data = get_pose_normed_estimate(args.source, args.target,
-                                    regen_source= not args.no_regen_source,
-                                    regen_target= not args.no_regen_target,
-                                    regen_norm= not args.no_regen_norm,
+                                    regen_source= not no_regen_source,
+                                    regen_target= not no_regen_target,
+                                    regen_norm= not no_regen_norm,
                                     rotated=args.rotated,
                                     height=args.height, width=args.width,
                                     max_frames=args.max_frames)

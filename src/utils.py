@@ -177,7 +177,7 @@ class PoseNormalizer:
         source[:, 0:2] = source.astype("int")[:, 0:2]
         return source
 
-    def transform_pose_global(self, source_all, target_all):
+    def transform_pose_global(self, source_all):
         """
         source :: list<ndarray> :: numpy array of all the pose estimates
                                    for all the frames of the source
@@ -197,6 +197,7 @@ class PoseNormalizer:
         }
         b = self._compute_translation(source_ankles, target_ankles)
         s = self._compute_scale(source_ankles)
+
         for i in range(len(source_all)):
             p = source_all[i]
             p[:, 1] *= s
@@ -499,8 +500,10 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
 
             pose_normalizer = PoseNormalizer(source_dict, target_dict,
                                              epsilon=5, alpha=1.1)
+
+            norm_source = source_poses.copy()
             transformed_all = pose_normalizer.transform_pose_global(
-                source_poses, target_poses
+                norm_source
             )
 
             np.save(os.path.join(save_dir, "normed_source_pose.npy"),
