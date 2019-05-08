@@ -78,8 +78,7 @@ def main():
     test_path_label = make_get_path(False, True)
 
     for i, (pose, subsets) in enumerate(zip(transformed_all, source_subsets)):
-        save_pose(pose, subsets, i, args.height, args.width)
-
+        save_pose(pose, subsets, test_path_label(i), args.height, args.width)
         print('test written', i, flush=True)
 
 

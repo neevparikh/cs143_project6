@@ -75,7 +75,7 @@ def chunk(xs, n):
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
 
-    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=10, alpha=1):
+    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=20, alpha=1):
         """
         source :: dict<ndarray> :: dict of source left ankle array and
                                    source right ankle array
