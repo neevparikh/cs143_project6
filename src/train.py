@@ -13,6 +13,7 @@ from options.train_options import TrainOptions
 from util.visualizer import Visualizer
 import os
 
+
 #TODO:
 # - Logging?
 # - TensorBoard?
@@ -46,11 +47,13 @@ def train(config, writer, logger):
 
     model.named_buffers = lambda: []
 
+    average_tensor = utils.load_average_img(config, data_set)
+
     if config.fp16:
         from apex import amp
         from apex.parallel import DistributedDataParallel as DDP
         model = model.cuda()
-        model, [optimizer_G, optimizer_D] = \
+        model, [optimizer_G, optimizer_D]= \
             amp.initialize(model, [model.optimizer_G, model.optimizer_D],
                            opt_level='O1')
 
@@ -68,13 +71,13 @@ def train(config, writer, logger):
             save_gen = (step + 1) % config.display_freq == 0
 
             if i == 0 or (not config.no_temporal_smoothing and \
-                          np.random.random() < config.prob_previous_zero):
+                          np.random.random() < config.prob_restart_sequence):
                 if config.no_temporal_smoothing:
                     prev_generated = prev_label = prev_real = None
                 else:
-                    prev_generated = torch.zeros_like(data['image'])
+                    prev_generated = average_tensor
                     prev_label = torch.zeros_like(data['label'])
-                    prev_real = torch.zeros_like(data['image'])
+                    prev_real = average_tensor
 
             data['label'] = data['label'][:, :1]
             assert data['label'].shape[1] == 1

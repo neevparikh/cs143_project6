@@ -3,6 +3,7 @@ import math
 import os
 import pickle
 import sys
+from PIL import Image
 
 sys.path.append(os.getcwd() + '/src/')
 sys.path.append(os.getcwd() + '/src/pix2pixHD/')
@@ -25,6 +26,14 @@ os.makedirs('data/train_img', exist_ok=True)
 os.makedirs('data/test_label', exist_ok=True)
 os.makedirs('data/test_img', exist_ok=True)
 os.makedirs('data/test_inst', exist_ok=True)
+
+def load_average_img(config, data_set):
+    average_img = Image.open("data/average.png").convert('RGB')
+    params = data_set.get_params(config, average_img.size)
+    transform = data_set.get_transform(config, params)
+    average_tensor = transform(average_img)
+
+    return average_tensor
 
 
 def get_body():
