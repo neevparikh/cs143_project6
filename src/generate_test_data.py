@@ -16,6 +16,13 @@ def main():
     add_base_args(parser)
 
     args = parser.parse_args()
+    no_regen_source = args.no_regen_source
+    no_regen_source = args.no_regen_source
+    no_regen_target = args.no_regen_target
+    no_regen_norm = args.no_regen_norm
+
+    if args.no_norm:
+        no_regen_norm = True 
 
     data = get_pose_normed_estimate(args.source, args.target,
                                     regen_source= not args.no_regen_source,
