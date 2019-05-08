@@ -37,7 +37,7 @@ def train(config, writer, logger):
                                              init_method='env://')
         config.world_size = torch.distributed.get_world_size()
 
-    data_set = CreateDataLoader(config).load_data()
+    data_set =  CreateDataLoader(config).load_data()
     total_steps = config.epochs * len(data_set)
     if config.gpu == 0:
         print(len(data_set), "# of Training Images")
@@ -47,7 +47,8 @@ def train(config, writer, logger):
 
     model.named_buffers = lambda: []
 
-    average_tensor = utils.load_average_img(config, data_set)
+    average_tensor = utils.load_average_img(config)
+    average_tensor = average_tensor.view(1, *average_tensor.shape)
 
     if config.fp16:
         from apex import amp

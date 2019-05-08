@@ -15,6 +15,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from tensorboardX import SummaryWriter
+from data.base_dataset import get_params, get_transform
 
 
 save_dir = "pose_data/"
@@ -27,10 +28,10 @@ os.makedirs('data/test_label', exist_ok=True)
 os.makedirs('data/test_img', exist_ok=True)
 os.makedirs('data/test_inst', exist_ok=True)
 
-def load_average_img(config, data_set):
+def load_average_img(config):
     average_img = Image.open("data/average.png").convert('RGB')
-    params = data_set.get_params(config, average_img.size)
-    transform = data_set.get_transform(config, params)
+    params = get_params(config, average_img.size)
+    transform = get_transform(config, params)
     average_tensor = transform(average_img)
 
     return average_tensor
