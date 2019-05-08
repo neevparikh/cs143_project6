@@ -11,6 +11,7 @@ from data.data_loader import CreateDataLoader
 from models.models import create_model
 from options.train_options import TrainOptions
 from util.visualizer import Visualizer
+import os
 
 #TODO:
 # - Logging?
@@ -19,6 +20,10 @@ from util.visualizer import Visualizer
 
 def train(config, writer, logger):
     config = config.opt
+
+    if 'WORLD_SIZE' in os.environ:
+        config.distributed = int(os.environ['WORLD_SIZE']) > 1
+
     data_set = CreateDataLoader(config).load_data()
     total_steps = config.epochs * len(data_set)
     print(len(data_set), "# of Training Images")
@@ -28,13 +33,28 @@ def train(config, writer, logger):
 
     model.named_buffers = lambda: []
 
+    config.distributed = False
+
+    config.gpu = 0
+    config.world_size = 1
+
+    if config.distributed:
+        config.gpu = config.local_rank
+        torch.cuda.set_device(config.gpu)
+        torch.distributed.init_process_group(backend='nccl',
+                                             init_method='env://')
+        config.world_size = torch.distributed.get_world_size()
+
     if config.fp16:
         from apex import amp
+        from apex.parallel import DistributedDataParallel as DDP
+        model = model.cuda()
         model, [optimizer_G, optimizer_D] = \
             amp.initialize(model, [model.optimizer_G, model.optimizer_D],
                            opt_level='O1')
 
-        model = torch.nn.DataParallel(model, device_ids=config.gpu_ids)
+        if config.distributed:
+            model = DDP(model)
 
     step = 0
 
