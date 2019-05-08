@@ -46,6 +46,7 @@ def main():
                             (width, height))
 
     for image in images:
+        print(os.path.join(image_folder, image))
         video.write(cv2.imread(os.path.join(image_folder, image)) * multiplier)
 
     video.release()

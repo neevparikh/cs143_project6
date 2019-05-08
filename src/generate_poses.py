@@ -11,9 +11,12 @@ def get_poses(paths):
     body_estimation = get_body()
     poses = []
     subsets = []
+    id = current_process()
+    print("id:", id)
+    print(paths)
 
     for path in paths:
-        print("on path:", path, "id:", current_process(), flush=True)
+        print("on path:", path, "id:", id, flush=True)
         img = cv2.imread(path, cv2.IMREAD_COLOR)
         pose, subset = body_estimation(img)
         poses.append(pose)
@@ -38,15 +41,12 @@ def main():
 
     def to_full_path(file_name): return os.path.join(args.image_dir, file_name)
 
-    chunks = chunk(
-        list(map(to_full_path, get_ordered_files(args.image_dir))),
-        args.threads
-    )
-    print(chunks[0])
-    print(len(chunks))
-
     poses_and_subsets = pool.map(
         get_poses,
+        chunk(
+            list(map(to_full_path, get_ordered_files(args.image_dir))),
+            args.threads
+        )
     )
 
     full_poses = []

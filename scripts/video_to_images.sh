@@ -5,4 +5,4 @@ if [[ $# -ne 2 ]]; then
   exit 1
 fi
 
-ffmpeg -i "$1" "$PWD/$2%05d.png"
+ffmpeg -i "$1" -vf scale=512:1024 "$PWD/$2%05d.png"
