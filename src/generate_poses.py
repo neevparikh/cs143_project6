@@ -12,7 +12,6 @@ def get_poses(paths):
     poses = []
     subsets = []
     id = current_process()
-    print("id:", id)
     print(paths)
 
     for path in paths:
@@ -37,7 +36,7 @@ def main():
 
     args = parser.parse_args()
 
-    pool = Pool(processes=4)
+    pool = Pool(processes=args.threads)
 
     def to_full_path(file_name): return os.path.join(args.image_dir, file_name)
 
@@ -60,7 +59,6 @@ def main():
 
     for name, values in to_iter:
         np.save(os.path.join(args.save_path, args.save_prefix + name), values)
-
 
 if __name__ == "__main__":
     main()
