@@ -19,6 +19,9 @@ toTensor = ToTensor()
 
 def generate(config, writer, logger):
     config = config.opt
+
+    config.distributed = False
+
     data_set = CreateDataLoader(config).load_data()
     model = create_model(config)
     visualizer = Visualizer(config)
