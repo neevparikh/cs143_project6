@@ -13,7 +13,6 @@ from options.train_options import TrainOptions
 from util.visualizer import Visualizer
 import os
 
-
 #TODO:
 # - Logging?
 # - TensorBoard?
@@ -37,7 +36,7 @@ def train(config, writer, logger):
                                              init_method='env://')
         config.world_size = torch.distributed.get_world_size()
 
-    data_set =  CreateDataLoader(config).load_data()
+    data_set = CreateDataLoader(config).load_data()
     total_steps = config.epochs * len(data_set)
     if config.gpu == 0:
         print(len(data_set), "# of Training Images")
@@ -54,7 +53,7 @@ def train(config, writer, logger):
         from apex import amp
         from apex.parallel import DistributedDataParallel as DDP
         model = model.cuda()
-        model, [optimizer_G, optimizer_D]= \
+        model, [optimizer_G, optimizer_D] = \
             amp.initialize(model, [model.optimizer_G, model.optimizer_D],
                            opt_level='O1')
 
