@@ -23,6 +23,8 @@ def train(config, writer, logger):
 
     if 'WORLD_SIZE' in os.environ:
         config.distributed = int(os.environ['WORLD_SIZE']) > 1
+    else:
+        config.distributed = 0
 
     data_set = CreateDataLoader(config).load_data()
     total_steps = config.epochs * len(data_set)
