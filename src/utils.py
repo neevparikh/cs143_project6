@@ -401,20 +401,24 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
                       left=left, right=right, indexes=indexes, name=name):
             candidate, subset = body_estimation(frame)
 
-            if np.min(subset[:, 19]) < 18:
-                print(name, 'frame dropped', counter, flush=True)
-            else:
-                indexes.append(counter)
-                poses.append(candidate)
-                subsets.append(subset)
+            indexes.append(counter)
+            poses.append(candidate)
+            subsets.append(subset)
+
+            # Check if either right or left ankle is missing
+            l_ankle = candidate[np.where(candidate[:, 3] == 13)]
+            r_ankle = candidate[np.where(candidate[:, 3] == 10)]
+            if l_ankle.shape[0] != 0 and r_ankle.shape[0] != 0:
                 left.append(candidate[13, 1])
                 right.append(candidate[10, 1])
                 print(name, 'frame kept:', counter, flush=True)
+            else:
+                print(name, 'ankle dropped:', counter, flush=True)
+
 
         return loop_func
 
     if source is not None:
-
         if regen_source:
             loop_frame(source, max_frames,
                        make_loop_func(source_poses, source_subsets, source_left,
@@ -480,6 +484,7 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
 
     if source is not None and target is not None:
         if regen_norm:
+
             source_dict = {
                 "left": np.array(source_left),
                 "right": np.array(source_right)
@@ -492,6 +497,7 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
 
             pose_normalizer = PoseNormalizer(source_dict, target_dict,
                                              epsilon=5, alpha=1.2)
+
             transformed_all = pose_normalizer.transform_pose_global(
                 source_poses, target_poses
             )

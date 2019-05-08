@@ -61,4 +61,4 @@ if __name__ == "__main__":
         video.write(cv2.imread(os.path.join(image_folder, image)) * multiplier)
 
     video.release()
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
