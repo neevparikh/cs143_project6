@@ -20,7 +20,7 @@ def natural_keys(text):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("image_folder", help="path to image folder")
-    parser.add_argument("video_name", 
+    parser.add_argument("video_name",
             help="name of output video with file extension")
     parser.add_argument("--pattern", help="regex pattern to use", default=None)
     parser.add_argument("--multiplier", type=int, help="multiplier for boosting viusal",
@@ -38,9 +38,9 @@ if __name__ == "__main__":
     multiplier = args.multiplier
     codec = args.codec
 
-    if pattern: 
+    if pattern:
         pattern = re.compile(pattern)
-        print("using pattern")  
+        print("using pattern")
 
     images = []
 

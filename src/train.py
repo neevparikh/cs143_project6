@@ -46,6 +46,9 @@ def train(config, writer, logger):
 
     model.named_buffers = lambda: []
 
+    average_tensor = utils.load_average_img(config)
+    average_tensor = average_tensor.view(1, *average_tensor.shape)
+
     if config.fp16:
         from apex import amp
         from apex.parallel import DistributedDataParallel as DDP
@@ -67,28 +70,26 @@ def train(config, writer, logger):
         for i, data in enumerate(data_set):
             save_gen = (step + 1) % config.display_freq == 0
 
-            if i == 0:
+            if i == 0 or (not config.no_temporal_smoothing and \
+                          np.random.random() < config.prob_restart_sequence):
                 if config.no_temporal_smoothing:
                     prev_generated = prev_label = prev_real = None
                 else:
-                    prev_generated = torch.zeros_like(data['image'])
+                    prev_generated = average_tensor
                     prev_label = torch.zeros_like(data['label'])
-                    prev_real = torch.zeros_like(data['image'])
+                    prev_real = average_tensor
 
             data['label'] = data['label'][:, :1]
             assert data['label'].shape[1] == 1
 
-            losses, generated = model(Variable(data['label']),
-                                      Variable(data['inst']),
-                                      Variable(data['image']),
-                                      Variable(data['feat']),
-                                      prev_label,
-                                      prev_generated,
-                                      prev_real,
+            losses, generated = model(Variable(data['label']).cuda(),
+                                      Variable(data['inst'].cuda()),
+                                      Variable(data['image'].cuda()),
+                                      Variable(data['feat'].cuda()),
+                                      prev_label.cuda(),
+                                      prev_generated.cuda(),
+                                      prev_real.cuda(),
                                       infer=save_gen)
-
-            prev_real = data['image'].detach()
-            prev_label = data['label'].detach()
 
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
@@ -159,6 +160,9 @@ def train(config, writer, logger):
                     model.module.save(epoch)
 
             prev_generated = generated
+            prev_real = data['image'].detach()
+            prev_label = data['label'].detach()
+
             step += 1
 
         ### train the entire network after certain iterations

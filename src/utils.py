@@ -3,6 +3,7 @@ import math
 import os
 import pickle
 import sys
+from PIL import Image
 
 sys.path.append(os.getcwd() + '/src/')
 sys.path.append(os.getcwd() + '/src/pix2pixHD/')
@@ -14,6 +15,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from tensorboardX import SummaryWriter
+from data.base_dataset import get_params, get_transform
 
 
 save_dir = "pose_data/"
@@ -26,6 +28,14 @@ os.makedirs('data/test_label', exist_ok=True)
 os.makedirs('data/test_img', exist_ok=True)
 os.makedirs('data/test_inst', exist_ok=True)
 
+def load_average_img(config):
+    average_img = Image.open("data/average.png").convert('RGB')
+    params = get_params(config, average_img.size)
+    transform = get_transform(config, params)
+    average_tensor = transform(average_img)
+
+    return average_tensor
+
 
 def get_body():
     return body.Body(os.getcwd() +
@@ -35,7 +45,7 @@ def get_body():
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
 
-    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=20, alpha = 1): 
+    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=10, alpha = 1): 
         """
         source :: dict<ndarray> :: dict of source left ankle array and
                                    source right ankle array
@@ -62,16 +72,18 @@ class PoseNormalizer:
         """ remove the frames where the leg is raised """
 
         num_frames = len(left_ankle_array)
+        ground_lvl = (left_ankle_array[0] + right_ankle_array[0]) // 2
         left_grounded = []
         right_grounded = []
 
         for i in range(num_frames):
-            if np.abs(left_ankle_array[i] - right_ankle_array[i]) < \
+            if np.abs(left_ankle_array[i] - ground_lvl) < self.inclusion_threshold \
+                    or np.abs(right_ankle_array[i] - ground_lvl) < \
                     self.inclusion_threshold:
                 left_grounded.append(left_ankle_array[i])
                 right_grounded.append(right_ankle_array[i])
             else:
-                pass
+                print('leg raised above ground, not including')
 
         return np.array(left_grounded), np.array(right_grounded)
 
@@ -105,10 +117,11 @@ class PoseNormalizer:
         s_min = self.statistics["source"]["min"]
         s_max = self.statistics["source"]["max"]
 
-        return (t_far / s_far) + (avg_source - s_min) / (s_max - s_min) * \
+        return (t_far / s_far) + ((avg_source - s_min) / (s_max - s_min)) * \
             ((t_close / s_close) - (t_far / s_far))
 
     def _compute_statistics(self, ankle_array, ankle_name):
+        print('estimating statistics for:', ankle_name)
         med = self._get_median_ankle_position(ankle_array)
         mx = self._get_max_ankle_position(ankle_array)
         avg = np.average(ankle_array)
@@ -124,6 +137,8 @@ class PoseNormalizer:
         self.statistics[ankle_name]["close"] = close_far[0]
         self.statistics[ankle_name]["far"] = close_far[1]
 
+        print('statistics estimated:', self.statistics)
+
     def _get_median_ankle_position(self, ankle_array):
         return np.median(ankle_array, overwrite_input=False)
 
@@ -131,11 +146,13 @@ class PoseNormalizer:
         try:
             cluster = np.array([p for p in ankle_array if (p < med) and (
                 np.abs(np.abs(p - med) - np.abs(mx - med)) < self.epsilon)])
+            print('size of cluster:', cluster.shape[0])
             mn = np.max(cluster)
         except Exception as e:
-            print(e)
-            print("Warning: Minimum as defined failed, reverting to np.min")
-            mn = np.min(ankle_array)
+            print("Warning: Minimum as defined failed, reverting to stable alg")
+            mn_est = np.abs(med - np.abs(mx - med))
+            print("estimated min:", mn_est, " finding closest")
+            mn = ankle_array[(np.abs(ankle_array - mn_est)).argmin()]
         return mn
 
     def _get_close_far_position(self, ankle_array, mx, mn):
@@ -168,7 +185,7 @@ class PoseNormalizer:
         source[:, 0:2] = source.astype("int")[:, 0:2]
         return source
 
-    def transform_pose_global(self, source_all, target_all):
+    def transform_pose_global(self, source_all):
         """
         source :: list<ndarray> :: numpy array of all the pose estimates
                                    for all the frames of the source
@@ -188,6 +205,8 @@ class PoseNormalizer:
         }
         b = self._compute_translation(source_ankles, target_ankles)
         s = self._compute_scale(source_ankles)
+        print('translation and scale:', b, s)
+
         for i in range(len(source_all)):
             p = source_all[i]
             p[:, 1] *= s
@@ -494,9 +513,11 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
             }
 
             pose_normalizer = PoseNormalizer(source_dict, target_dict,
-                                             epsilon=5, alpha=1.1)
+                                             epsilon=5, alpha=1)
+
+            norm_source = source_poses.copy()
             transformed_all = pose_normalizer.transform_pose_global(
-                source_poses, target_poses
+                norm_source
             )
 
             np.save(os.path.join(save_dir, "normed_source_pose.npy"),
