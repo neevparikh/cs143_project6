@@ -122,7 +122,7 @@ def train(config, writer, logger):
                 loss_D.backward()
             model.module.optimizer_D.step()
 
-            if config.gpu == 0:
+            if config.distributed and torch.distributed.get_rank() == 0:
                 if (step + 1) % config.print_freq == 0 or step == total_steps - 1:
                     logger.info(
                         "Train: [{:2d}/{}] Step {:03d}/{:03d}".format(
