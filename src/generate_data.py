@@ -9,7 +9,6 @@ def add_base_args(parser):
                         help="height for saved video")
     parser.add_argument("--width", type=int, default=512,
                         help="width for saved video")
-    parser.add_argument("--rotated", choices=["true", "false"], required=True)
     parser.add_argument("--max_frames", type=float, default=float('inf'))
 
 
