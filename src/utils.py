@@ -2,22 +2,23 @@ import logging
 import math
 import os
 import pickle
-import sys
-from PIL import Image
 import re
+import sys
+
+import cv2
+import numpy as np
+import torch
+import torch.nn as nn
+from PIL import Image
+from tensorboardX import SummaryWriter
+
 
 sys.path.append(os.getcwd() + '/src/')
 sys.path.append(os.getcwd() + '/src/pix2pixHD/')
 sys.path.append(os.getcwd() + '/src/pytorch-openpose/')
 
-from python import body
-import cv2
-import numpy as np
-import torch
-import torch.nn as nn
-from tensorboardX import SummaryWriter
 from data.base_dataset import get_params, get_transform
-
+from python import body
 
 save_dir = "pose_data/"
 
@@ -29,6 +30,7 @@ os.makedirs('data/test_label', exist_ok=True)
 os.makedirs('data/test_img', exist_ok=True)
 os.makedirs('data/test_inst', exist_ok=True)
 
+
 def load_average_img(config):
     average_img = Image.open("data/average.png").convert('RGB')
     params = get_params(config, average_img.size)
@@ -37,8 +39,10 @@ def load_average_img(config):
 
     return average_tensor
 
+
 def atoi(text):
     return int(text) if text.isdigit() else text
+
 
 def natural_keys(text):
     '''
@@ -46,14 +50,17 @@ def natural_keys(text):
     http://nedbatchelder.com/blog/200712/human_sorting.html
     (See Toothy's implementation in the comments)
     '''
-    return [ atoi(c) for c in re.split(r'(\d+)', text) ]
+    return [atoi(c) for c in re.split(r'(\d+)', text)]
+
 
 def get_ordered_files(path):
     return sorted(os.listdir(path), key=natural_keys)
 
+
 def get_body():
     return body.Body(os.getcwd() +
                      '/src/pytorch-openpose/model/body_pose_model.pth')
+
 
 def chunk(xs, n):
     '''Split the list, xs, into n chunks'''
@@ -64,10 +71,11 @@ def chunk(xs, n):
     chunks[n-1:] = [xs[-r-s:]]
     return chunks
 
+
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
 
-    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=10, alpha = 1): 
+    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=10, alpha=1):
         """
         source :: dict<ndarray> :: dict of source left ankle array and
                                    source right ankle array
@@ -94,14 +102,14 @@ class PoseNormalizer:
         """ remove the frames where the leg is raised """
 
         num_frames = len(left_ankle_array)
-        ground_lvl = (np.mean(left_ankle_array[0:5]) + \
-                np.mean(right_ankle_array[0:5])) // 2
+        ground_lvl = (np.mean(left_ankle_array[0:5]) +
+                      np.mean(right_ankle_array[0:5])) // 2
         left_grounded = []
         right_grounded = []
 
         for i in range(num_frames):
-            if np.abs(left_ankle_array[i] \
-                    - right_ankle_array[i]) < self.inclusion_threshold:
+            if np.abs(left_ankle_array[i]
+                      - right_ankle_array[i]) < self.inclusion_threshold:
                 left_grounded.append(left_ankle_array[i])
                 right_grounded.append(right_ankle_array[i])
             else:
@@ -125,7 +133,7 @@ class PoseNormalizer:
 
         # self.statistics["target"]["total_avg"]
         return t_min + ((avg_source - s_min) / (s_max - s_min)) * \
-            (t_max - t_min)  - (self.alpha * avg_target)
+            (t_max - t_min) - (self.alpha * avg_target)
 
     def _compute_scale(self, source):
         """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) *
@@ -375,178 +383,3 @@ def draw_bodypose(canvas, pose, subset):
             canvas = cur_canvas
 
     return canvas
-
-
-def loop_frame(video_path, max_frames, func, rotated, width, height):
-    video = cv2.VideoCapture(video_path)
-    frame = None
-
-    def get_frame():
-        nonlocal frame
-        ret, frame = video.read()
-        return ret
-
-    counter = 0
-
-    while(counter < max_frames and get_frame()):
-        func(transform_frame(frame, rotated, width, height), counter)
-        counter += 1
-
-    video.release()
-
-
-def transform_frame(frame, rotated, width, height):
-    if rotated:
-        frame = np.rot90(np.rot90(np.rot90(frame)))
-
-    frame = cv2.resize(frame, (int(width), int(height)))
-
-    return frame
-
-def get_pose_normed_estimate(source, target, regen_source, regen_target,
-                             regen_norm, rotated, height, width,
-                             max_frames):
-
-    if source is not None:
-        assert os.path.isfile(source)
-
-    if target is not None:
-        assert os.path.isfile(target)
-
-    body_estimation = get_body()
-
-    if source is not None:
-        source_poses = []
-        source_subsets = []
-
-        source_left = []
-        source_right = []
-
-        source_indexes = []
-
-    if target is not None:
-        target_poses = []
-        target_subsets = []
-
-        target_left = []
-        target_right = []
-
-        target_indexes = []
-
-    ret = {}
-
-    def make_loop_func(poses, subsets, left, right, indexes, name):
-        def loop_func(frame, counter, poses=poses, subsets=subsets,
-                      left=left, right=right, indexes=indexes, name=name):
-            candidate, subset = body_estimation(frame)
-
-            indexes.append(counter)
-            poses.append(candidate)
-            subsets.append(subset)
-            l_ankle = candidate[np.where(candidate[:, 3] == 13)].shape[0] != 0
-            r_ankle = candidate[np.where(candidate[:, 3] == 10)].shape[0] != 0
-            min_keypoints = np.min(subset[:, 19]) >= 18
-            # Check if either right or left ankle is missing
-            if l_ankle and r_ankle and min_keypoints:
-                left.append(candidate[13, 1])
-                right.append(candidate[10, 1])
-                print(name, 'frame kept:', counter, flush=True)
-            else:
-                print(name, 'ankle dropped:', counter, flush=True)
-
-        return loop_func
-
-    if source is not None:
-        if regen_source:
-            loop_frame(source, max_frames,
-                       make_loop_func(source_poses, source_subsets, source_left,
-                                      source_right, source_indexes, 'source'),
-                       rotated, width, height)
-
-            np.save(os.path.join(save_dir, "source_poses.npy"), source_poses)
-            np.save(os.path.join(save_dir, "source_subsets.npy"), source_subsets)
-            np.save(os.path.join(save_dir, "source_indexes.npy"), source_indexes)
-            np.save(os.path.join(save_dir, "source_left.npy"), source_left)
-            np.save(os.path.join(save_dir, "source_right.npy"), source_right)
-            ret['source_poses'] = source_poses
-            ret['source_subsets'] = source_subsets
-            ret['source_indexes'] = source_indexes
-        else:
-            print("Grabbing from npy files")
-            source_poses = np.load(os.path.join(
-                save_dir, "source_poses.npy"), allow_pickle=True)
-            source_subsets = np.load(os.path.join(
-                save_dir, "source_subsets.npy"), allow_pickle=True)
-            source_indexes = np.load(os.path.join(
-                save_dir, "source_indexes.npy"), allow_pickle=True)
-            source_left = np.load(os.path.join(save_dir, "source_left.npy"),
-                                  allow_pickle=True)
-            source_right = np.load(os.path.join(save_dir, "source_right.npy"),
-                                   allow_pickle=True)
-            ret['source_poses'] = source_poses
-            ret['source_subsets'] = source_subsets
-            ret['source_indexes'] = source_indexes
-
-    if target is not None:
-        if regen_target:
-            loop_frame(target, max_frames,
-                       make_loop_func(target_poses, target_subsets, target_left,
-                                      target_right, target_indexes, 'target'),
-                       rotated, width, height)
-
-            np.save(os.path.join(save_dir, "target_poses.npy"), target_poses)
-            np.save(os.path.join(save_dir, "target_subsets.npy"),
-                    target_subsets)
-            np.save(os.path.join(save_dir, "target_indexes.npy"),
-                    target_indexes)
-            np.save(os.path.join(save_dir, "target_left.npy"), target_left)
-            np.save(os.path.join(save_dir, "target_right.npy"), target_right)
-            ret['target_poses'] = target_poses
-            ret['target_subsets'] = target_subsets
-            ret['target_indexes'] = target_indexes
-        else:
-            print("Grabbing from npy files")
-            target_poses = np.load(os.path.join(
-                save_dir, "target_poses.npy"), allow_pickle=True)
-            target_subsets = np.load(os.path.join(
-                save_dir, "target_subsets.npy"), allow_pickle=True)
-            target_indexes = np.load(os.path.join(
-                save_dir, "target_indexes.npy"), allow_pickle=True)
-            target_left = np.load(os.path.join(save_dir, "target_left.npy"),
-                                  allow_pickle=True)
-            target_right = np.load(os.path.join(save_dir, "target_right.npy"),
-                                   allow_pickle=True)
-            ret['target_poses'] = target_poses
-            ret['target_subsets'] = target_subsets
-            ret['target_indexes'] = target_indexes
-
-    if source is not None and target is not None:
-        if regen_norm:
-
-            source_dict = {
-                "left": np.array(source_left),
-                "right": np.array(source_right)
-            }
-
-            target_dict = {
-                "left": np.array(target_left),
-                "right": np.array(target_right)
-            }
-
-            pose_normalizer = PoseNormalizer(source_dict, target_dict,
-                                             epsilon=5, alpha=1)
-
-            norm_source = source_poses.copy()
-            transformed_all = pose_normalizer.transform_pose_global(
-                norm_source
-            )
-
-            np.save(os.path.join(save_dir, "normed_source_pose.npy"),
-                    np.array(transformed_all))
-            ret['transformed_all'] = transformed_all
-        else:
-            transformed_all = np.load(os.path.join(
-                save_dir, "normed_source_pose.npy"), allow_pickle=True)
-            ret['transformed_all'] = transformed_all
-
-    return ret
