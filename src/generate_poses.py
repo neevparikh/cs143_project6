@@ -48,6 +48,8 @@ def main():
         )
     )
 
+    print("after pool")
+
     full_poses = []
     full_subsets = []
 
@@ -58,7 +60,7 @@ def main():
     to_iter = (("poses", full_poses), ("subsets", full_subsets))
 
     for name, values in to_iter:
-        np.save(os.path.join(args.save_path, args.save_prefix + name), values)
+        np.save(os.path.join(args.save_dir, args.save_prefix + name), values)
 
 if __name__ == "__main__":
     main()
