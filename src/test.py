@@ -34,17 +34,16 @@ def generate(config, writer, logger):
 
     is_first = True
 
-    start_img = Image.open(config.first_load_path)
-    prev_generated = (toTensor(start_img) * 2 - 1).cuda()
-    shape = prev_generated.shape
-    prev_generated = prev_generated.view(1, *shape)
+    average_tensor = utils.load_average_img(config)
+    prev_generated = average_tensor.view(1, *average_tensor.shape)
 
     for data in tqdm(data_set):
         if config.no_temporal_smoothing:
             data['label'] = data['label'][:,:1]
             assert data['label'].shape[1] == 1
 
-            generated = model.inference(data['label'], data['inst'])
+            generated = model.inference(data['label'].cuda(),
+                                        data['inst'].cuda())
             visuals = OrderedDict([('input_label',
                                     util.tensor2label(data['label'][0],
                                                        config.label_nc)),
@@ -58,7 +57,8 @@ def generate(config, writer, logger):
             assert data['label'].shape[1] == 1
 
             generated = model.inference(
-                data['label'], data['inst'], prev_generated)
+                data['label'].cuda(), data['inst'].cuda(),
+                prev_generated.cuda())
 
             prev_generated = generated
             is_first = False
