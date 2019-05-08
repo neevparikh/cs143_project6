@@ -57,6 +57,8 @@ def train(config, writer, logger):
 
         if config.distributed:
             model = DDP(model)
+        else:
+            model = torch.nn.DataParallel(model)
 
     step = 0
 
