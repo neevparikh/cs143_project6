@@ -21,10 +21,13 @@ import os
 def train(config, writer, logger):
     config = config.opt
 
+    config.distributed = False
+
     if 'WORLD_SIZE' in os.environ:
         config.distributed = int(os.environ['WORLD_SIZE']) > 1
-    else:
-        config.distributed = 0
+
+    config.gpu = 0
+    config.world_size = 1
 
     if config.distributed:
         config.gpu = config.local_rank
@@ -35,17 +38,13 @@ def train(config, writer, logger):
 
     data_set = CreateDataLoader(config).load_data()
     total_steps = config.epochs * len(data_set)
-    print(len(data_set), "# of Training Images")
+    if config.gpu == 0:
+        print(len(data_set), "# of Training Images")
 
     model = create_model(config)
     visualizer = Visualizer(config)
 
     model.named_buffers = lambda: []
-
-    config.distributed = False
-
-    config.gpu = 0
-    config.world_size = 1
 
     if config.fp16:
         from apex import amp
@@ -56,14 +55,15 @@ def train(config, writer, logger):
                            opt_level='O1')
 
         if config.distributed:
-            model = DDP(model)
+            model = DDP(model, delay_allreduce=True)
         else:
-            model = torch.nn.DataParallel(model)
+            model = torch.nn.DataParallel(model, delay_allreduce=True)
 
     step = 0
 
     for epoch in range(config.epochs):
-        print("epoch: ", epoch)
+        if config.gpu == 0:
+            print("epoch: ", epoch)
         for i, data in enumerate(data_set):
             save_gen = (step + 1) % config.display_freq == 0
 
@@ -121,41 +121,42 @@ def train(config, writer, logger):
                 loss_D.backward()
             model.module.optimizer_D.step()
 
-            if (step + 1) % config.print_freq == 0 or step == total_steps - 1:
-                logger.info(
-                    "Train: [{:2d}/{}] Step {:03d}/{:03d}".format(
-                        epoch + 1, config.epochs, i, len(data_set) - 1
+            if config.gpu == 0:
+                if (step + 1) % config.print_freq == 0 or step == total_steps - 1:
+                    logger.info(
+                        "Train: [{:2d}/{}] Step {:03d}/{:03d}".format(
+                            epoch + 1, config.epochs, i, len(data_set) - 1
+                        )
                     )
-                )
-                logger.info(
-                    "Loss D: {},  Loss G {}, Loss VGG {}".format(
-                        loss_D.item(), loss_dict['G_GAN'].item(),
-                        loss_dict['G_VGG'].item()
+                    logger.info(
+                        "Loss D: {},  Loss G {}, Loss VGG {}".format(
+                            loss_D.item(), loss_dict['G_GAN'].item(),
+                            loss_dict['G_VGG'].item()
+                        )
                     )
-                )
 
-            if save_gen:
-                visuals = OrderedDict([('input_label',
-                                        util.tensor2label(data['label'][0],
-                                                          config.label_nc)),
-                                       ('synthesized_image', util.tensor2im(
-                                           generated.data[0])),
-                                       ('real_image',
-                                        util.tensor2im(data['image'][0]))])
+                if save_gen:
+                    visuals = OrderedDict([('input_label',
+                                            util.tensor2label(data['label'][0],
+                                                              config.label_nc)),
+                                           ('synthesized_image', util.tensor2im(
+                                               generated.data[0])),
+                                           ('real_image',
+                                            util.tensor2im(data['image'][0]))])
 
-                if not config.no_temporal_smoothing:
-                    visuals['prev_label'] = util.tensor2label(prev_label[0],
-                                                              config.label_nc)
-                    visuals['prev_real'] = util.tensor2im(prev_real[0])
-                    visuals['prev_generated'] = util.tensor2im(
-                        prev_generated.data[0])
+                    if not config.no_temporal_smoothing:
+                        visuals['prev_label'] = util.tensor2label(prev_label[0],
+                                                                  config.label_nc)
+                        visuals['prev_real'] = util.tensor2im(prev_real[0])
+                        visuals['prev_generated'] = util.tensor2im(
+                            prev_generated.data[0])
 
-                visualizer.display_current_results(visuals, epoch, total_steps)
+                    visualizer.display_current_results(visuals, epoch, total_steps)
 
-            if (step + 1) % config.save_latest_freq == 0 or \
-                    step == total_steps - 1:
-                model.module.save('latest')
-                model.module.save(epoch)
+                if (step + 1) % config.save_latest_freq == 0 or \
+                        step == total_steps - 1:
+                    model.module.save('latest')
+                    model.module.save(epoch)
 
             prev_generated = generated
             step += 1
