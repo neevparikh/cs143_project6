@@ -5,6 +5,7 @@ from utils import PoseNormalizer, save_dir
 import numpy as np
 import os
 
+
 def main():
     parser = argparse.ArgumentParser()
     add_base_args(parser)
@@ -19,7 +20,6 @@ def main():
         save_dir, "test_poses.npy"), allow_pickle=True)
     source_subsets = np.load(os.path.join(
         save_dir, "test_subsets.npy"), allow_pickle=True)
-
 
     assert len(source_poses) == len(source_subsets)
     assert len(target_poses) == len(target_subsets)

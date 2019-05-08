@@ -113,7 +113,10 @@ class PoseNormalizer:
                 left_grounded.append(left_ankle_array[i])
                 right_grounded.append(right_ankle_array[i])
             else:
-                print('leg raised above ground, not including')
+                diff = np.abs(left_ankle_array[i]
+                      - right_ankle_array[i])
+                print('leg raised above ground, not including. diff:',
+                      diff, "inclusion_threshold:", self.inclusion_threshold)
 
         return np.array(left_grounded), np.array(right_grounded)
 
