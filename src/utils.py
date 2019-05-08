@@ -94,14 +94,14 @@ class PoseNormalizer:
         """ remove the frames where the leg is raised """
 
         num_frames = len(left_ankle_array)
-        ground_lvl = (left_ankle_array[0] + right_ankle_array[0]) // 2
+        ground_lvl = (np.mean(left_ankle_array[0:5]) + \
+                np.mean(right_ankle_array[0:5])) // 2
         left_grounded = []
         right_grounded = []
 
         for i in range(num_frames):
-            if np.abs(left_ankle_array[i] - ground_lvl) < self.inclusion_threshold \
-                    or np.abs(right_ankle_array[i] - ground_lvl) < \
-                    self.inclusion_threshold:
+            if np.abs(left_ankle_array[i] \
+                    - right_ankle_array[i]) < self.inclusion_threshold:
                 left_grounded.append(left_ankle_array[i])
                 right_grounded.append(right_ankle_array[i])
             else:
@@ -440,20 +440,23 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
                       left=left, right=right, indexes=indexes, name=name):
             candidate, subset = body_estimation(frame)
 
-            if np.min(subset[:, 19]) < 18:
-                print(name, 'frame dropped', counter, flush=True)
-            else:
-                indexes.append(counter)
-                poses.append(candidate)
-                subsets.append(subset)
+            indexes.append(counter)
+            poses.append(candidate)
+            subsets.append(subset)
+            l_ankle = candidate[np.where(candidate[:, 3] == 13)].shape[0] != 0
+            r_ankle = candidate[np.where(candidate[:, 3] == 10)].shape[0] != 0
+            min_keypoints = np.min(subset[:, 19]) >= 18
+            # Check if either right or left ankle is missing
+            if l_ankle and r_ankle and min_keypoints:
                 left.append(candidate[13, 1])
                 right.append(candidate[10, 1])
                 print(name, 'frame kept:', counter, flush=True)
+            else:
+                print(name, 'ankle dropped:', counter, flush=True)
 
         return loop_func
 
     if source is not None:
-
         if regen_source:
             loop_frame(source, max_frames,
                        make_loop_func(source_poses, source_subsets, source_left,
@@ -519,6 +522,7 @@ def get_pose_normed_estimate(source, target, regen_source, regen_target,
 
     if source is not None and target is not None:
         if regen_norm:
+
             source_dict = {
                 "left": np.array(source_left),
                 "right": np.array(source_right)
