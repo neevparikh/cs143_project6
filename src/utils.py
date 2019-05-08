@@ -4,6 +4,7 @@ import os
 import pickle
 import sys
 from PIL import Image
+import re
 
 sys.path.append(os.getcwd() + '/src/')
 sys.path.append(os.getcwd() + '/src/pix2pixHD/')
@@ -36,11 +37,32 @@ def load_average_img(config):
 
     return average_tensor
 
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [ atoi(c) for c in re.split(r'(\d+)', text) ]
+
+def get_ordered_files(path):
+    return sorted(os.listdir(path), key=natural_keys)
 
 def get_body():
     return body.Body(os.getcwd() +
                      '/src/pytorch-openpose/model/body_pose_model.pth')
 
+def chunk(xs, n):
+    '''Split the list, xs, into n chunks'''
+    L = len(xs)
+    assert 0 < n <= L
+    s, r = divmod(L, n)
+    chunks = [xs[p:p+s] for p in range(0, L, s)]
+    chunks[n-1:] = [xs[-r-s:]]
+    return chunks
 
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
