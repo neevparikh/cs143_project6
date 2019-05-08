@@ -2,6 +2,7 @@ import cv2
 import os
 import argparse
 import re
+from tqdm import tqdm
 
 from utils import get_ordered_files
 
@@ -45,8 +46,7 @@ def main():
                             cv2.VideoWriter_fourcc(*codec), fps,
                             (width, height))
 
-    for image in images:
-        print(os.path.join(image_folder, image))
+    for image in tqdm(images):
         video.write(cv2.imread(os.path.join(image_folder, image)) * multiplier)
 
     video.release()

@@ -3,7 +3,7 @@ import argparse
 import cv2
 
 from generate_data import add_base_args, make_get_path, save_pose
-from utils import get_pose_normed_estimate, loop_frame, save_dir
+from utils import save_dir
 from tqdm import tqdm
 import numpy as np
 
