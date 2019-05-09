@@ -89,7 +89,8 @@ def train(config, writer, logger):
                                       prev_label.cuda(),
                                       prev_generated.cuda(),
                                       prev_real.cuda(),
-                                      infer=save_gen)
+                                      infer=save_gen,
+                                      average=average_tensor)
 
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
