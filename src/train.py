@@ -161,12 +161,12 @@ def train(config, writer, logger):
                     model.module.save('latest')
                     model.module.save(epoch)
 
-        if not config.no_temporal_smoothing:
-            prev_generated = generated.cuda()
-            prev_real = data['image'].detach().cuda()
-            prev_label = data['label'].detach().cuda()
+            if not config.no_temporal_smoothing:
+                prev_generated = generated.cuda()
+                prev_real = data['image'].detach().cuda()
+                prev_label = data['label'].detach().cuda()
 
-        step += 1
+            step += 1
 
         ### train the entire network after certain iterations
         if (config.niter_fix_global != 0) and (epoch == config.niter_fix_global):
