@@ -60,7 +60,7 @@ def train(config, writer, logger):
         if config.distributed:
             model = DDP(model, delay_allreduce=True)
         else:
-            model = torch.nn.DataParallel(model, delay_allreduce=True)
+            model = torch.nn.DataParallel(model)
 
     step = 0
 
