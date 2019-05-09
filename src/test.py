@@ -60,7 +60,7 @@ def generate(config, writer, logger):
                 data['label'].cuda(), data['inst'].cuda(),
                 prev_generated.cuda())
 
-            prev_generated = generated
+            # prev_generated = generated
             is_first = False
 
             visuals = OrderedDict([('input_label',
