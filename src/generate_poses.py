@@ -33,17 +33,24 @@ def main():
         "--save_dir", help="directory to save outputs", default="pose_data")
     parser.add_argument("--threads", help="number of threads to use", type=int,
                         default=8)
+    parser.add_argument("--max_frames", help="maximum frames to compute", type=int,
+                        default=None)
 
     args = parser.parse_args()
+
 
     pool = Pool(processes=args.threads)
 
     def to_full_path(file_name): return os.path.join(args.image_dir, file_name)
 
+    paths = list(map(to_full_path, get_ordered_files(args.image_dir)))
+    if args.max_frames is not None:
+        paths = paths[:args.max_frames]
+
     poses_and_subsets = pool.map(
         get_poses,
         chunk(
-            list(map(to_full_path, get_ordered_files(args.image_dir))),
+            paths,
             args.threads
         )
     )
