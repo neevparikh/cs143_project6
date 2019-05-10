@@ -75,7 +75,8 @@ def chunk(xs, n):
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
 
-    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=20, alpha=1):
+    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=20, 
+                 alpha=1, manual_scale=None):
         """
         source :: dict<ndarray> :: dict of source left ankle array and
                                    source right ankle array
@@ -92,6 +93,7 @@ class PoseNormalizer:
             target["left"], target["right"])
         self.epsilon = epsilon
         self.alpha = alpha
+        self.manual_scale = manual_scale
         self.statistics = {}
         self._compute_statistics(
             np.append(self.s_left, self.s_right), "source")
@@ -140,18 +142,20 @@ class PoseNormalizer:
 
     def _compute_scale(self, source):
         """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) *
-                (t_close / s_close - t_far / s_far) """
+        (t_close / s_close - t_far / s_far) """
+        if self.manual_scale is not None:
+            return self.manual_scale
+        else:
+            avg_source = (source["left"] + source["right"]) / 2
+            t_far = self.statistics["target"]["far"]
+            t_close = self.statistics["target"]["close"]
+            s_far = self.statistics["source"]["far"]
+            s_close = self.statistics["source"]["close"]
+            s_min = self.statistics["source"]["min"]
+            s_max = self.statistics["source"]["max"]
 
-        avg_source = (source["left"] + source["right"]) / 2
-        t_far = self.statistics["target"]["far"]
-        t_close = self.statistics["target"]["close"]
-        s_far = self.statistics["source"]["far"]
-        s_close = self.statistics["source"]["close"]
-        s_min = self.statistics["source"]["min"]
-        s_max = self.statistics["source"]["max"]
-
-        return (t_far / s_far) + ((avg_source - s_min) / (s_max - s_min)) * \
-            ((t_close / s_close) - (t_far / s_far))
+            return (t_far / s_far) + ((avg_source - s_min) /
+                   (s_max - s_min)) * ((t_close / s_close) - (t_far / s_far))
 
     def _compute_statistics(self, ankle_array, ankle_name):
         print('estimating statistics for:', ankle_name)
@@ -198,26 +202,6 @@ class PoseNormalizer:
     def _get_max_ankle_position(self, ankle_array):
         return np.max(ankle_array)
 
-    def transform_pose(self, source, target):
-        """
-        source :: ndarray :: numpy array of all the pose estimates as
-                             returned by pose estimation of source video
-        target :: ndarray :: numpy array of all the pose estimates as
-                             returned by pose estimation of target video
-
-        Returns :: normalized target in the same format
-        """
-
-        source_ankles = {"left": source[13, 1], "right": source[10, 1]}
-        target_ankles = {"left": target[13, 1], "right": target[10, 1]}
-
-        b = self._compute_translation(source_ankles, target_ankles)
-        s = self._compute_scale(source_ankles)
-        source[:, 1] *= s
-        source[:, 1] += b
-        source[:, 0:2] = source.astype("int")[:, 0:2]
-        return source
-
     def transform_pose_global(self, source_all):
         """
         source :: list<ndarray> :: numpy array of all the pose estimates
@@ -242,7 +226,10 @@ class PoseNormalizer:
 
         for i in range(len(source_all)):
             p = source_all[i]
+            max_v = p[:, 1].max()
+            p[:, 1] -= max_v
             p[:, 1] *= s
+            p[:, 1] += max_v
             p[:, 1] += b
             p[:, 0:2] = p.astype("int")[:, 0:2]
             source_all[i] = p

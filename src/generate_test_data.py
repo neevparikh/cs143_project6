@@ -8,6 +8,8 @@ import os
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--manual_scale", type=float, default=None,
+                        help="manual scale factor")
     add_base_args(parser)
 
     args = parser.parse_args()
@@ -64,8 +66,8 @@ def main():
         "right": np.array(target_right)
     }
 
-    pose_normalizer = PoseNormalizer(source_dict, target_dict,
-                                     epsilon=5, alpha=1)
+    pose_normalizer = PoseNormalizer(source_dict, target_dict, epsilon=5,
+                                     alpha=1, manual_scale=args.manual_scale)
 
     norm_source = source_poses.copy()
     transformed_all = pose_normalizer.transform_pose_global(
@@ -78,6 +80,8 @@ def main():
     test_path_label = make_get_path(False, True)
 
     for i, (pose, subsets) in enumerate(zip(transformed_all, source_subsets)):
+        if i >= args.max_frames:
+            break
         save_pose(pose, subsets, test_path_label(i), args.height, args.width)
         print('test written', i, flush=True)
 
