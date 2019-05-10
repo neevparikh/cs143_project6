@@ -10,6 +10,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--manual_scale", type=float, default=None,
                         help="manual scale factor")
+    parser.add_argument("--manual_translate", type=float, default=None,
+                        help="manual translation factor")
     add_base_args(parser)
 
     args = parser.parse_args()
@@ -67,7 +69,8 @@ def main():
     }
 
     pose_normalizer = PoseNormalizer(source_dict, target_dict, epsilon=5,
-                                     alpha=1, manual_scale=args.manual_scale)
+                                     alpha=1, manual_scale=args.manual_scale,
+                                     manual_translate=args.manual_translate)
 
     norm_source = source_poses.copy()
     transformed_all = pose_normalizer.transform_pose_global(

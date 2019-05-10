@@ -75,8 +75,8 @@ def chunk(xs, n):
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
 
-    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=20, 
-                 alpha=1, manual_scale=None):
+    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=20,
+                 alpha=1, manual_scale=None, manual_translate=None):
         """
         source :: dict<ndarray> :: dict of source left ankle array and
                                    source right ankle array
@@ -94,6 +94,7 @@ class PoseNormalizer:
         self.epsilon = epsilon
         self.alpha = alpha
         self.manual_scale = manual_scale
+        self.manual_translate = manual_translate
         self.statistics = {}
         self._compute_statistics(
             np.append(self.s_left, self.s_right), "source")
@@ -126,19 +127,22 @@ class PoseNormalizer:
         """ b = t_min + (avg_frame_pos_source - s_min) / (s_max - s_min) *
                 (t_max - t_min) - f_source """
 
-        # NOTE: f_source assumed to be avg_target as we don't know what it is
-        # yet
+        if self.manual_translate is not None:
+            return self.manual_translate
+        else:
+            # NOTE: f_source assumed to be avg_target as we don't know what it is
+            # yet
 
-        avg_source = (source["left"] + source["right"]) / 2
-        avg_target = (target["left"] + target["right"]) / 2
-        t_min = self.statistics["target"]["min"]
-        t_max = self.statistics["target"]["max"]
-        s_min = self.statistics["source"]["min"]
-        s_max = self.statistics["source"]["max"]
+            avg_source = (source["left"] + source["right"]) / 2
+            avg_target = (target["left"] + target["right"]) / 2
+            t_min = self.statistics["target"]["min"]
+            t_max = self.statistics["target"]["max"]
+            s_min = self.statistics["source"]["min"]
+            s_max = self.statistics["source"]["max"]
 
-        # self.statistics["target"]["total_avg"]
-        return t_min + ((avg_source - s_min) / (s_max - s_min)) * \
-            (t_max - t_min) - (self.alpha * avg_target)
+            # self.statistics["target"]["total_avg"]
+            return t_min + ((avg_source - s_min) / (s_max - s_min)) * \
+                (t_max - t_min) - (self.alpha * avg_target)
 
     def _compute_scale(self, source):
         """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) *
