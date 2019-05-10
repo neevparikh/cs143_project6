@@ -90,8 +90,8 @@ def train(config, writer, logger):
                                       prev_generated,
                                       prev_real,
                                       infer=save_gen or \
-                                      (not config.no_temporal_smoothing),
-                                      average=average_tensor)
+                                      (not config.no_temporal_smoothing))
+            # average=average_tensor)
 
 
             # sum per device losses
