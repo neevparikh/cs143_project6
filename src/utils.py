@@ -87,19 +87,21 @@ class PoseNormalizer:
         """
 
         self.inclusion_threshold = inclusion_threshold
-        self.s_left, self.s_right = self._include_ground_only(
-            source["left"], source["right"])
-        self.t_left, self.t_right = self._include_ground_only(
-            target["left"], target["right"])
         self.epsilon = epsilon
         self.alpha = alpha
         self.manual_scale = manual_scale
         self.manual_translate = manual_translate
-        self.statistics = {}
-        self._compute_statistics(
-            np.append(self.s_left, self.s_right), "source")
-        self._compute_statistics(
-            np.append(self.t_left, self.t_right), "target")
+
+        if self.manual_translate is None or self.manual_scale is None:
+            self.s_left, self.s_right = self._include_ground_only(
+                source["left"], source["right"])
+            self.t_left, self.t_right = self._include_ground_only(
+                target["left"], target["right"])
+            self.statistics = {}
+            self._compute_statistics(
+                np.append(self.s_left, self.s_right), "source")
+            self._compute_statistics(
+                np.append(self.t_left, self.t_right), "target")
 
     def _include_ground_only(self, left_ankle_array, right_ankle_array):
         """ remove the frames where the leg is raised """
@@ -216,20 +218,27 @@ class PoseNormalizer:
         Returns :: globally normalized in the same format
         """
 
-        source_ankles = {
-            "left": self.statistics["source"]["total_avg"],
-            "right": self.statistics["source"]["total_avg"]
-        }
-        target_ankles = {
-            "left": self.statistics["target"]["total_avg"],
-            "right": self.statistics["target"]["total_avg"]
-        }
+        if self.manual_translate is None or self.manual_scale is None:
+            source_ankles = {
+                "left": self.statistics["source"]["total_avg"],
+                "right": self.statistics["source"]["total_avg"]
+            }
+            target_ankles = {
+                "left": self.statistics["target"]["total_avg"],
+                "right": self.statistics["target"]["total_avg"]
+            }
+        else:
+            source_ankles, target_ankles = None, None
+
         b = self._compute_translation(source_ankles, target_ankles)
         s = self._compute_scale(source_ankles)
         print('translation and scale:', b, s)
 
         for i in range(len(source_all)):
             p = source_all[i]
+            print(p)
+            if p.size == 0:
+                continue
             max_v = p[:, 1].max()
             p[:, 1] -= max_v
             p[:, 1] *= s
