@@ -42,7 +42,6 @@ def main():
                 r_ankle = poses[i][np.where(poses[i][:, 3] == 10)].shape[0] != 0
 
                 # Check if either right or left ankle is missing
-                print(subsets[i][:, 19].shape)
                 if l_ankle and r_ankle and subsets[i][:, 19].size != 0 and \
                         np.min(subsets[i][:, 19]) >= 18:
                     left.append(poses[i][13, 1])

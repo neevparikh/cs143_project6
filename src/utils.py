@@ -236,7 +236,6 @@ class PoseNormalizer:
 
         for i in range(len(source_all)):
             p = source_all[i]
-            print(p)
             if p.size == 0:
                 continue
             max_v = p[:, 1].max()
