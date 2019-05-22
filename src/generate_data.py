@@ -18,7 +18,7 @@ def make_get_path(is_train, is_label):
                                      type_name, type_name)
 
     def get_path(counter, path_b=path_b):
-        return "{}{}.png".format(path_b, counter)
+        return "{}{:05d}.png".format(path_b, counter)
 
     return get_path
 

@@ -47,7 +47,7 @@ def train(config, writer, logger):
     model.named_buffers = lambda: []
 
     average_tensor = utils.load_average_img(config)
-    average_tensor = average_tensor.view(1, *average_tensor.shape)
+    average_tensor = average_tensor.view(1, *average_tensor.shape).cuda()
 
     if config.fp16:
         from apex import amp
@@ -60,7 +60,7 @@ def train(config, writer, logger):
         if config.distributed:
             model = DDP(model, delay_allreduce=True)
         else:
-            model = torch.nn.DataParallel(model, delay_allreduce=True)
+            model = torch.nn.DataParallel(model)
 
     step = 0
 
@@ -76,7 +76,7 @@ def train(config, writer, logger):
                     prev_generated = prev_label = prev_real = None
                 else:
                     prev_generated = average_tensor
-                    prev_label = torch.zeros_like(data['label'])
+                    prev_label = torch.zeros_like(data['label']).cuda()
                     prev_real = average_tensor
 
             data['label'] = data['label'][:, :1]
@@ -86,10 +86,13 @@ def train(config, writer, logger):
                                       Variable(data['inst'].cuda()),
                                       Variable(data['image'].cuda()),
                                       Variable(data['feat'].cuda()),
-                                      prev_label.cuda(),
-                                      prev_generated.cuda(),
-                                      prev_real.cuda(),
-                                      infer=save_gen)
+                                      prev_label,
+                                      prev_generated,
+                                      prev_real,
+                                      infer=save_gen or \
+                                      (not config.no_temporal_smoothing))
+            # average=average_tensor)
+
 
             # sum per device losses
             losses = [torch.mean(x) if not isinstance(
@@ -122,7 +125,7 @@ def train(config, writer, logger):
                 loss_D.backward()
             model.module.optimizer_D.step()
 
-            if config.gpu == 0:
+            if (not config.distributed) or torch.distributed.get_rank() == 0:
                 if (step + 1) % config.print_freq == 0 or step == total_steps - 1:
                     logger.info(
                         "Train: [{:2d}/{}] Step {:03d}/{:03d}".format(
@@ -159,9 +162,10 @@ def train(config, writer, logger):
                     model.module.save('latest')
                     model.module.save(epoch)
 
-            prev_generated = generated
-            prev_real = data['image'].detach()
-            prev_label = data['label'].detach()
+            if not config.no_temporal_smoothing:
+                prev_generated = generated.cuda()
+                prev_real = data['image'].detach().cuda()
+                prev_label = data['label'].detach().cuda()
 
             step += 1
 

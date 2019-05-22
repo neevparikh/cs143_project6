@@ -75,7 +75,8 @@ def chunk(xs, n):
 class PoseNormalizer:
     ''' Normalizes the pose as described in the Everybody Dance Now paper '''
 
-    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=10, alpha=1):
+    def __init__(self, source, target, epsilon=0.7, inclusion_threshold=20,
+                 alpha=1, manual_scale=None, manual_translate=None):
         """
         source :: dict<ndarray> :: dict of source left ankle array and
                                    source right ankle array
@@ -86,17 +87,21 @@ class PoseNormalizer:
         """
 
         self.inclusion_threshold = inclusion_threshold
-        self.s_left, self.s_right = self._include_ground_only(
-            source["left"], source["right"])
-        self.t_left, self.t_right = self._include_ground_only(
-            target["left"], target["right"])
         self.epsilon = epsilon
         self.alpha = alpha
-        self.statistics = {}
-        self._compute_statistics(
-            np.append(self.s_left, self.s_right), "source")
-        self._compute_statistics(
-            np.append(self.t_left, self.t_right), "target")
+        self.manual_scale = manual_scale
+        self.manual_translate = manual_translate
+
+        if self.manual_translate is None or self.manual_scale is None:
+            self.s_left, self.s_right = self._include_ground_only(
+                source["left"], source["right"])
+            self.t_left, self.t_right = self._include_ground_only(
+                target["left"], target["right"])
+            self.statistics = {}
+            self._compute_statistics(
+                np.append(self.s_left, self.s_right), "source")
+            self._compute_statistics(
+                np.append(self.t_left, self.t_right), "target")
 
     def _include_ground_only(self, left_ankle_array, right_ankle_array):
         """ remove the frames where the leg is raised """
@@ -124,34 +129,39 @@ class PoseNormalizer:
         """ b = t_min + (avg_frame_pos_source - s_min) / (s_max - s_min) *
                 (t_max - t_min) - f_source """
 
-        # NOTE: f_source assumed to be avg_target as we don't know what it is
-        # yet
+        if self.manual_translate is not None:
+            return self.manual_translate
+        else:
+            # NOTE: f_source assumed to be avg_target as we don't know what it is
+            # yet
 
-        avg_source = (source["left"] + source["right"]) / 2
-        avg_target = (target["left"] + target["right"]) / 2
-        t_min = self.statistics["target"]["min"]
-        t_max = self.statistics["target"]["max"]
-        s_min = self.statistics["source"]["min"]
-        s_max = self.statistics["source"]["max"]
+            avg_source = (source["left"] + source["right"]) / 2
+            avg_target = (target["left"] + target["right"]) / 2
+            t_min = self.statistics["target"]["min"]
+            t_max = self.statistics["target"]["max"]
+            s_min = self.statistics["source"]["min"]
+            s_max = self.statistics["source"]["max"]
 
-        # self.statistics["target"]["total_avg"]
-        return t_min + ((avg_source - s_min) / (s_max - s_min)) * \
-            (t_max - t_min) - (self.alpha * avg_target)
+            # self.statistics["target"]["total_avg"]
+            return t_min + ((avg_source - s_min) / (s_max - s_min)) * \
+                (t_max - t_min) - (self.alpha * avg_target)
 
     def _compute_scale(self, source):
         """ s = t_far / s_far + (a_source - s_min) / (s_max - s_min) *
-                (t_close / s_close - t_far / s_far) """
+        (t_close / s_close - t_far / s_far) """
+        if self.manual_scale is not None:
+            return self.manual_scale
+        else:
+            avg_source = (source["left"] + source["right"]) / 2
+            t_far = self.statistics["target"]["far"]
+            t_close = self.statistics["target"]["close"]
+            s_far = self.statistics["source"]["far"]
+            s_close = self.statistics["source"]["close"]
+            s_min = self.statistics["source"]["min"]
+            s_max = self.statistics["source"]["max"]
 
-        avg_source = (source["left"] + source["right"]) / 2
-        t_far = self.statistics["target"]["far"]
-        t_close = self.statistics["target"]["close"]
-        s_far = self.statistics["source"]["far"]
-        s_close = self.statistics["source"]["close"]
-        s_min = self.statistics["source"]["min"]
-        s_max = self.statistics["source"]["max"]
-
-        return (t_far / s_far) + ((avg_source - s_min) / (s_max - s_min)) * \
-            ((t_close / s_close) - (t_far / s_far))
+            return (t_far / s_far) + ((avg_source - s_min) /
+                   (s_max - s_min)) * ((t_close / s_close) - (t_far / s_far))
 
     def _compute_statistics(self, ankle_array, ankle_name):
         print('estimating statistics for:', ankle_name)
@@ -198,26 +208,6 @@ class PoseNormalizer:
     def _get_max_ankle_position(self, ankle_array):
         return np.max(ankle_array)
 
-    def transform_pose(self, source, target):
-        """
-        source :: ndarray :: numpy array of all the pose estimates as
-                             returned by pose estimation of source video
-        target :: ndarray :: numpy array of all the pose estimates as
-                             returned by pose estimation of target video
-
-        Returns :: normalized target in the same format
-        """
-
-        source_ankles = {"left": source[13, 1], "right": source[10, 1]}
-        target_ankles = {"left": target[13, 1], "right": target[10, 1]}
-
-        b = self._compute_translation(source_ankles, target_ankles)
-        s = self._compute_scale(source_ankles)
-        source[:, 1] *= s
-        source[:, 1] += b
-        source[:, 0:2] = source.astype("int")[:, 0:2]
-        return source
-
     def transform_pose_global(self, source_all):
         """
         source :: list<ndarray> :: numpy array of all the pose estimates
@@ -228,21 +218,30 @@ class PoseNormalizer:
         Returns :: globally normalized in the same format
         """
 
-        source_ankles = {
-            "left": self.statistics["source"]["total_avg"],
-            "right": self.statistics["source"]["total_avg"]
-        }
-        target_ankles = {
-            "left": self.statistics["target"]["total_avg"],
-            "right": self.statistics["target"]["total_avg"]
-        }
+        if self.manual_translate is None or self.manual_scale is None:
+            source_ankles = {
+                "left": self.statistics["source"]["total_avg"],
+                "right": self.statistics["source"]["total_avg"]
+            }
+            target_ankles = {
+                "left": self.statistics["target"]["total_avg"],
+                "right": self.statistics["target"]["total_avg"]
+            }
+        else:
+            source_ankles, target_ankles = None, None
+
         b = self._compute_translation(source_ankles, target_ankles)
         s = self._compute_scale(source_ankles)
         print('translation and scale:', b, s)
 
         for i in range(len(source_all)):
             p = source_all[i]
+            if p.size == 0:
+                continue
+            max_v = p[:, 1].max()
+            p[:, 1] -= max_v
             p[:, 1] *= s
+            p[:, 1] += max_v
             p[:, 1] += b
             p[:, 0:2] = p.astype("int")[:, 0:2]
             source_all[i] = p
